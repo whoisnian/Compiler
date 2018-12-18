@@ -1,0 +1,38 @@
+int add1(int x)
+{
+    return x + 1;
+}
+int gcd(int x,int y)
+{
+    if(x!=y)x=gcd(y,x/y);
+    y=add1(x);
+    return y;
+}
+int main(void)
+{
+    int a;
+    int b;
+    int c;
+    int d[10];
+    a = 1;
+    b = 20;
+    if(a <= b)
+    {
+        c=a;
+        a=b;
+        b=c; // 这是注释
+    }
+    /*
+     * 多行
+     * 注释
+     */
+    if(a > b)
+        a = b + 1;
+    else
+        b = a + 1;
+    while(a < 10)
+    {
+        a = add1(a);
+    }
+    return 0;
+}
