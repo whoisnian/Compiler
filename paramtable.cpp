@@ -13,7 +13,7 @@ int size_tmp;
 int loc_main;
 int id_tmp;
 stack<char> alNums;
-map<int, int> table_synb, table_pfinf;
+map<int, int> table_synb, table_pfinf, table_cons;
 vector<vall> valls;
 vector<vall> basicValls;
 void initAll()
@@ -42,7 +42,8 @@ void initAll()
     elems.clear();
     table_synb.clear();
     table_pfinf.clear();
-    id_tmp = 100;
+    table_cons.clear();
+    id_tmp = 100; //临时变量的开始值
 }
 void addFun(int id)
 {
@@ -75,18 +76,19 @@ void backFun()
     cout << "backFun" << endl;
 #endif
     Funcs.pop();
+    pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("funend", -1, -1, -1));
-    pfinf[Funcs.top()].elems.push_back(elems.size() - 1);
 }
 void addNum(int id, bool isparam)
 {
 #ifdef DEBUG
-    cout << "addNum" << ' ' << id << ' '<<isparam << endl;
+    cout << "addNum" << ' ' << id << ' ' << isparam << endl;
 #endif
     for (int i = 0; i < pfinf[Funcs.top()].synbs.size(); i++)
         if (synb[pfinf[Funcs.top()].synbs[i]].name == id)
         {
-            cout << "error: redeclaration of 'int " << id << "'" << endl;
+            if (id < 100)
+                cout << "error: redeclaration of 'int " << id << "'" << endl;
             return;
         }
     synbl newS;
@@ -152,6 +154,8 @@ void addCon(int id, int data)
     cons.push_back(newC);
     newS.addr = cons.size() - 1;
     synb.push_back(newS);
+    pfinf[Funcs.top()].synbs.push_back(synb.size() - 1);
+    table_cons.insert(make_pair(id, data));
 }
 void alGeq(string op)
 {
@@ -178,14 +182,16 @@ void alGeq(string op)
 #endif
     if (op == "=")
     {
+        pfinf[Funcs.top()].elems.push_back(elems.size());
         elems.push_back(elem(op, id1, -1, id2));
-        pfinf[Funcs.top()].elems.push_back(elems.size() - 1);
+        alNums.push(id2);
     }
     else
     {
         addNum(id_tmp);
-        elems.push_back(elem(op, id1, id2, id_tmp));
-        pfinf[Funcs.top()].elems.push_back(elems.size() - 1);
+        pfinf[Funcs.top()].elems.push_back(elems.size());
+        addNum(id_tmp);
+        elems.push_back(elem(op, id2, id1, id_tmp));
         alNums.push(id_tmp);
         id_tmp++;
     }
@@ -210,7 +216,7 @@ void alPop()
     alNums.pop();
 }
 void exIf()
-{ //需要加跳转地址
+{
 #ifdef DEBUG
     cout << "exIf" << endl;
 #endif
@@ -222,7 +228,7 @@ void exIf()
     int id1;
     id1 = alNums.top();
     alNums.pop();
-    pfinf[Funcs.top()].elems.push_back(elems.size() - 1);
+    pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("if", id1, -1, -1));
 }
 void exIe()
@@ -230,7 +236,7 @@ void exIe()
 #ifdef DEBUG
     cout << "exIe" << endl;
 #endif
-    pfinf[Funcs.top()].elems.push_back(elems.size() - 1);
+    pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("ie", -1, -1, -1));
 }
 void exEl()
@@ -238,7 +244,7 @@ void exEl()
 #ifdef DEBUG
     cout << "exEl" << endl;
 #endif
-    pfinf[Funcs.top()].elems.push_back(elems.size() - 1);
+    pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("el", -1, -1, -1));
 }
 void exWh()
@@ -246,11 +252,11 @@ void exWh()
 #ifdef DEBUG
     cout << "exWh" << endl;
 #endif
-    pfinf[Funcs.top()].elems.push_back(elems.size() - 1);
+    pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("wh", -1, -1, -1));
 }
 void exDo()
-{ //需要加跳转地址
+{
 #ifdef DEBUG
     cout << "exDo" << endl;
 #endif
@@ -262,7 +268,7 @@ void exDo()
     int id1;
     id1 = alNums.top();
     alNums.pop();
-    pfinf[Funcs.top()].elems.push_back(elems.size() - 1);
+    pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("do", id1, -1, -1));
 }
 void exWe()
@@ -270,7 +276,7 @@ void exWe()
 #ifdef DEBUG
     cout << "exWe" << endl;
 #endif
-    pfinf[Funcs.top()].elems.push_back(elems.size() - 1);
+    pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("we", -1, -1, -1));
 }
 void callBegin(int id)
@@ -286,8 +292,11 @@ void callBegin(int id)
     }
     calls.push(id);
     callParams.push(0);
-    pfinf[Funcs.top()].elems.push_back(elems.size() - 1);
-    elems.push_back(elem("call", id, -1, -1));
+    pfinf[Funcs.top()].elems.push_back(elems.size());
+    elems.push_back(elem("call", id, id_tmp, -1));
+    addNum(id_tmp);
+    alNums.push(id_tmp);
+    id_tmp++;
 }
 void callEnd()
 {
@@ -331,8 +340,21 @@ void callParam()
     num = callParams.top();
     callParams.pop();
     callParams.push(++num);
-    pfinf[Funcs.top()].elems.push_back(elems.size() - 1);
+    pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("params", id1, -1, -1));
+}
+void retNum()
+{
+    int id1;
+    id1 = alNums.top();
+    alNums.pop();
+    pfinf[Funcs.top()].elems.push_back(elems.size());
+    elems.push_back(elem("retnum", -1, -1, id1));
+}
+void retNonum()
+{
+    pfinf[Funcs.top()].elems.push_back(elems.size());
+    elems.push_back(elem("ret", -1, -1, -1));
 }
 void gen4elem() //处理四元式的if，while等语句的跳转位置并输出四元式用来调试
 {
@@ -355,12 +377,14 @@ void gen4elem() //处理四元式的if，while等语句的跳转位置并输出�
         if (elems[i].st == "el")
         {
             elems[sem.top()].id0 = i + 1;
+            elems[i + 1].needtag = true;
             sem.pop();
             sem.push(i);
         }
         if (elems[i].st == "ie")
         {
             elems[sem.top()].id0 = i + 1;
+            elems[i + 1].needtag = true;
             sem.pop();
         }
         if (elems[i].st == "wh")
@@ -370,8 +394,10 @@ void gen4elem() //处理四元式的if，while等语句的跳转位置并输出�
         if (elems[i].st == "we")
         {
             elems[sem.top()].id0 = i + 1;
+            elems[i + 1].needtag = true;
             sem.pop();
             elems[i].id0 = sem.top() + 1;
+            elems[sem.top() + 1].needtag = true;
             sem.pop();
         }
     }
@@ -394,14 +420,17 @@ void genValls() //生成活动记录表
         sum = 0;
         for (i = 0; i < pfinf[k].param.size(); i++)
         {
-            nowvall.par.insert(make_pair(pfinf[k].param[i], sum++));
+            nowvall.par.insert(make_pair(synb[pfinf[k].param[i]].name, sum));
+            nowvall.var.insert(make_pair(synb[pfinf[k].param[i]].name, sum));
+            sum += 2;
         }
         for (i = 0; i < pfinf[k].synbs.size(); i++)
         {
-            nowvall.var.insert(make_pair(pfinf[k].synbs[i], sum++));
+            nowvall.var.insert(make_pair(synb[pfinf[k].synbs[i]].name, sum));
+            sum += 2;
             if (synb[pfinf[k].synbs[i]].cat == 'l')
             {
-                sum += ainf[synb[pfinf[k].synbs[i]].addr].up - ainf[synb[pfinf[k].synbs[i]].addr].low;
+                sum += 2 * (ainf[synb[pfinf[k].synbs[i]].addr].up - ainf[synb[pfinf[k].synbs[i]].addr].low);
             }
         }
         nowvall.size = sum;
@@ -434,11 +463,11 @@ void outputParam()
     for (i = 0; i < pfinf.size(); i++)
     {
         printf("params: ");
-        for(j=0;j<pfinf[i].param.size();j++)
-            printf("%d ",pfinf[i].param[j]);
+        for (j = 0; j < pfinf[i].param.size(); j++)
+            printf("%d ", pfinf[i].param[j]);
         printf("\nsynbs: ");
-        for(j=0;j<pfinf[i].synbs.size();j++)
-            printf("%d ",pfinf[i].synbs[j]);
+        for (j = 0; j < pfinf[i].synbs.size(); j++)
+            printf("%d ", pfinf[i].synbs[j]);
         printf("\n");
     }
     map<int, int>::iterator it;
@@ -456,7 +485,215 @@ void outputParam()
         printf("%d\n", basicValls[i].size);
     }
 }
+void toax(int k, int id) //输出到从内存提取到ax的汇编指令
+{
+    if (table_cons.count(id))
+    {
+        cout << "MOV   AX," << table_cons[id] << endl;
+    }
+    else if (basicValls[0].var.count(id))
+    {
+        id = basicValls[0].var[id];
+        cout << "MOV   AX,[BX+" << id << "]" << endl;
+    }
+    else
+    {
+        id = basicValls[k].var[id];
+        cout << "MOV   AX,[BP-" << id << "]" << endl;
+    }
+}
+void tocx(int k, int id) //输出到从内存提取到ax的汇编指令
+{
+    if (table_cons.count(id))
+    {
+        cout << "MOV   AX," << table_cons[id] << endl;
+    }
+    else if (basicValls[0].var.count(id))
+    {
+        id = basicValls[0].var[id];
+        cout << "MOV   CX,[BX+" << id << "]" << endl;
+    }
+    else
+    {
+        id = basicValls[k].var[id];
+        cout << "MOV   CX,[BP-" << id << "]" << endl;
+    }
+}
+void axto(int k, int id) //输出到从ax提取到内存的汇编指令
+{
+    if (basicValls[0].var.count(id))
+    {
+        id = basicValls[0].var[id];
+        cout << "MOV   [BX+" << id << "],AX" << endl;
+    }
+    else
+    {
+        id = basicValls[k].var[id];
+        cout << "MOV   [BP-" << id << "],AX" << endl;
+    }
+}
+void jgjp(int k, string st, int tg) //符合条件则跳转
+{
+    if (st == "jmp")
+    {
+        cout << "JMP   F" << k << "T" << tg << endl;
+    }
+    else if (st == "==")
+    {
+        cout << "JE    F" << k << "T" << tg << endl;
+    }
+    else if (st == "!=")
+    {
+        cout << "JNE    F" << k << "T" << tg << endl;
+    }
+    else if (st == ">")
+    {
+        cout << "JA    F" << k << "T" << tg << endl;
+    }
+    else if (st == "<=")
+    {
+        cout << "JNA   F" << k << "T" << tg << endl;
+    }
+    else if (st == "<")
+    {
+        cout << "JB    F" << k << "T" << tg << endl;
+    }
+    else if (st == ">=")
+    {
+        cout << "JNB   F" << k << "T" << tg << endl;
+    }
+}
 void genAssembly()
 {
+    int i, j, k, id0, id1, id2, tmpjmp = -1;
+    string tmpst;
+    elem tmpelem("", -1, -1, -1);
+    cout << "SSEG  SEGMENT STACK" << endl;
+    cout << "SKTOP DW 200 DUP(?)" << endl;
+    cout << "SSEG  ENDS" << endl;
+    cout << "DSEG  SEGMENT" << endl;
+    cout << "MAINV DW " << basicValls[0].size << " DUP(?)" << endl;
+    cout << "DSEG  ENDS" << endl;
+    cout << "CSEG  SEGMENT" << endl;
+    cout << "      ASSUME  SS:SSEG,CS:CSEG,DS:DSEG" << endl;
+    for (k = 1; k < pfinf.size(); k++)
+    {
+        if (k != pfinf.size() - 1)
+            cout << "FUN" << k << "  PROC NEAR" << endl;
+        else
+        {
+            cout << "START:MOV   AX,DSEG" << endl;
+            cout << "MOV   DS,AX" << endl;
+            cout << "MOV   BP,SP" << endl;           //BP：当前函数栈顶
+            cout << "MOV   BX,OFFSET MAINV" << endl; //SI：全局变量
+            cout << "MOV   AX,0" << endl;
+            cout << "MOV   CX," << basicValls[k].size << endl;
+            cout << "F" << k << "IN: NOP" << endl;
+            cout << "PUSH  AX" << endl;
+            cout << "LOOP  F" << k << "IN" << endl;
+            cout << "PUSH  BP" << endl;
+        }
+        /*for (i = 0; i < pfinf[k].param.size(); i++)
+            if (synb[pfinf[k].param[i]].cat == 'c')
+            {
+                cout<<"MOV   AX,"<<cons[synb[pfinf[k].param[i]].addr].data<<endl;
+                axto(k,pfinf[k].param[i]);
+            }*/
+        for (i = 0; i < pfinf[k].elems.size(); i++)
+        {
+            tmpelem = elems[pfinf[k].elems[i]];
+#ifdef DEBUG
+            cout << ";";
+            tmpelem.output();
+#endif
+            if (tmpelem.needtag)
+                cout << "F" << k << "T" << pfinf[k].elems[i] << ": NOP" << endl;
+            if (tmpelem.st == "=")
+            {
+                toax(k, tmpelem.id1);
+                axto(k, tmpelem.id0);
+            }
+            else if (tmpelem.iscntop())
+            {
+                toax(k, tmpelem.id1);
+                tocx(k, tmpelem.id2);
+                if (tmpelem.st == "+")
+                {
+                    cout << "ADD   AX,BX" << endl;
+                }
+                else if (tmpelem.st == "-")
+                {
+                    cout << "SUB   AX,BX" << endl;
+                }
+                else if (tmpelem.st == "*")
+                {
+                    cout << "MUL   BX" << endl;
+                }
+                else if (tmpelem.st == "/")
+                {
+                    cout << "DIV   BX" << endl;
+                }
+                else if (tmpelem.st == "%")
+                {
+                    cout << "DIV   BX" << endl;
+                    cout << "MOV   AX,DX" << endl;
+                }
+                axto(k, tmpelem.id0);
+            }
+            else if (tmpelem.isjugop())
+            {
+                toax(k, tmpelem.id1);
+                tocx(k, tmpelem.id2);
+                cout << "CMP   AX,BX" << endl;
+                cout << "MOV   AX,1" << endl;
+                jgjp(0, tmpelem.st, ++tmpjmp);
+                cout << "MOV   AX,0" << endl;
+                cout << "F0T" << tmpjmp << ": NOP" << endl;
+                axto(k, tmpelem.id0);
+            }
+            else if (tmpelem.st == "if")
+            {
+                toax(k, tmpelem.id1);
+                cout << "CMP  AX,0" << endl;
+                jgjp(k, "==", tmpelem.id0);
+            }
+            else if (tmpelem.st == "ie")
+            {
+                jgjp(k, "JMP", tmpelem.id0);
+            }
+            else if (tmpelem.st == "el")
+            {
+            }
+            else if (tmpelem.st == "wh")
+            {
+            }
+            else if (tmpelem.st == "do")
+            {
+                toax(k, tmpelem.id1);
+                cout << "CMP  AX,0" << endl;
+                jgjp(k, "==", tmpelem.id0);
+            }
+            else if (tmpelem.st == "we")
+            {
+                jgjp(k, "jmp", tmpelem.id0);
+            }
+            else if (tmpelem.st == "call")
+            {
+            }
+            else if (tmpelem.st == "params")
+            {
+
+                cout << "MOV   AX,[BP-SI]" << endl;
+                cout << "PUSH  AX" << endl;
+            }
+        }
+        if (k != pfinf.size() - 1)
+            cout << "FUN" << k << "  ENDP" << endl;
+        else
+        {
+            cout << "CSEG  ENDS" << endl;
+            cout << "      END   START" << endl;
+        }
+    }
     valls.clear();
 }

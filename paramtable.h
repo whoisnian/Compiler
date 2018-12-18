@@ -13,9 +13,10 @@ using namespace std;
 /*
 通过符号表可以很好的指定每个变量在内存中的位置
 to-do list：
-return处理
+增加活跃信息处理
 alpush数组处理
 增加数据类型
+增加对无符号数的支持
 优化：除去未使用变量
 优化：及时清除已使用临时变量
 */
@@ -43,13 +44,22 @@ struct lenl{
 };
 struct elem{
     elem(string ist,int iid1,int iid2,int iid0){
-        st=ist;id1=iid1;id2=iid2;id0=iid0;
+        st=ist;id1=iid1;id2=iid2;id0=iid0;needtag=false;
     }
     void output(){
         cout<<st<<' '<<id1<<' '<<id2<<' '<<id0<<endl;
     }
+    bool iscntop(){
+        if(st=="+"||st=="-"||st=="*"||st=="/"||st=="%")return true;
+        return false;
+    }
+    bool isjugop(){
+        if(st=="=="||st=="<="||st==">="||st=="!="||st=="<"||st==">")return true;
+        return false;
+    }
     string st;
     int id1,id2,id0;
+    bool needtag;
 };
 struct vall{
     map<int,int>var;
@@ -75,6 +85,8 @@ void exWe();
 void callBegin(int id);
 void callEnd();
 void callParam();
+void retNum();
+void retNonum();
 void gen4elem();
 void genValls();
 void outputParam();

@@ -260,6 +260,7 @@ void Syntax::prepare_for_4elem()
         case PROCESS_RETURN_STMT_1:
             {
                 scanner.next();
+                retNonum();
                 scanner.next();
                 return;
             }
@@ -267,6 +268,7 @@ void Syntax::prepare_for_4elem()
             {
                 scanner.next();
                 prepare_for_4elem();
+                retNum();
                 scanner.next();
                 return;
             }
