@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 void MainWindow::showError(int lineNumber, std::string errMessage)
 {
-    this->statusBar()->showMessage(QString(errMessage.c_str()), 5000);
+    this->statusBar()->showMessage(QString(errMessage.c_str()), 2000);
     this->codeEditor->highlightErrorLine(lineNumber);
 }
 
@@ -33,10 +33,10 @@ void MainWindow::about()
 void MainWindow::newFile()
 {
     this->codeEditor->curFile.clear();
+    this->codeEditor->clear();
     codeEditor->document()->setModified(false);
     setWindowModified(false);
     setWindowFilePath("untitled.txt");
-    this->codeEditor->clear();
 }
 
 void MainWindow::openFile()
@@ -235,8 +235,9 @@ void MainWindow::setupMenuAndToolBar()
 
 void MainWindow::documentWasModified()
 {
-    setWindowFilePath(codeEditor->curFile);
     setWindowModified(codeEditor->document()->isModified());
+    setWindowFilePath(codeEditor->curFile);
+    //qDebug() << codeEditor->curFile;
 }
 
 void MainWindow::runLexical()
@@ -246,7 +247,59 @@ void MainWindow::runLexical()
 
 void MainWindow::runSyntactic()
 {
-
+    Scan scanner;
+    scanner.initFrom(codeEditor->document()->toPlainText().toStdString());
+    if(scanner.errPos != -1)
+    {
+        QMessageBox msg(this);
+        msg.setIcon(QMessageBox::Critical);
+        msg.setWindowTitle("词法分析遇到问题");
+        if(scanner.errPos == 0)
+            msg.setText(std::string("错误原因\n\n"+scanner.errMessage).c_str());
+        else
+            msg.setText(std::string("第"+std::to_string(scanner.errLine+1)+"行\n\n"+scanner.errMessage).c_str());
+        msg.addButton(QMessageBox::Ok);
+        msg.exec();
+        return;
+    }
+    Syntax syn(scanner);
+    if(syn.program() == 0&&syn.scanner.next().isEOF())
+    {
+        QTableWidget *table = new QTableWidget(syn.syntaxProcess.size(), 3, nullptr);
+        for(int i = 0;i < (int)syn.syntaxProcess.size();i++)
+        {
+            table->setItem(i, 0, new QTableWidgetItem(std::to_string(i).c_str()));
+            table->setItem(i, 1, new QTableWidgetItem(std::to_string(syn.syntaxProcess.at(i)).c_str()));
+            table->setItem(i, 2, new QTableWidgetItem(synText[syn.syntaxProcess.at(i)]));
+        }
+        table->horizontalHeader()->hide();
+        table->verticalHeader()->hide();
+        table->horizontalHeader()->setStretchLastSection(true);
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table->setSelectionBehavior(QAbstractItemView::SelectRows);
+        table->resize(900, 594);
+        table->setWindowIcon(QIcon::fromTheme("view-media-playlist"));
+        table->setWindowTitle("语法分析过程");
+        table->setWordWrap(false);
+        table->resizeColumnsToContents();
+        table->show();
+        return;
+    }
+    else
+    {
+        QMessageBox msg(this);
+        msg.setIcon(QMessageBox::Critical);
+        msg.setWindowTitle("语法分析遇到问题");
+        syn.scanner.curIndex = 0;
+        if(syn.program() == 0)
+            msg.setText(std::string("第"+std::to_string(syn.scanner.tokens.at(syn.errPos).lineNumber+1)+"行\n\n完整程序之外存在多余部分").c_str());
+        else
+            msg.setText(std::string("第"+std::to_string(syn.scanner.tokens.at(syn.errPos).lineNumber+1)+"行\n\n"+syn.errMessage+syn.scanner.tokens.at(syn.errPos).name).c_str());
+        msg.addButton(QMessageBox::Ok);
+        msg.exec();
+        showError(syn.scanner.tokens.at(syn.errPos).lineNumber+1, syn.errMessage+syn.scanner.tokens.at(syn.errPos).name);
+        return;
+    }
 }
 
 void MainWindow::runCompile()

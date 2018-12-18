@@ -22,6 +22,7 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
     this->highlightCurrentLine();
     this->setCursorWidth(2);
     this->document()->setDocumentMargin(0);
+    this->curFile = "untitled.txt";
 }
 
 int CodeEditor::lineNumberAreaWidth()
@@ -77,13 +78,13 @@ void CodeEditor::lineNumberAreaPaintEvent(QPaintEvent *event)
 
 void CodeEditor::highlightErrorLine(int lineNumber)
 {
-    int curLineNumber = this->textCursor().blockNumber();
+    int curLineNumber = this->textCursor().blockNumber()+1;
     QTextCursor tempCursor = this->textCursor();
     if(lineNumber <= 0) return;
-    if(lineNumber < curLineNumber+1)
-        tempCursor.movePosition(QTextCursor::PreviousBlock, QTextCursor::MoveAnchor, curLineNumber+1 - lineNumber);
+    if(lineNumber < curLineNumber)
+        tempCursor.movePosition(QTextCursor::PreviousBlock, QTextCursor::MoveAnchor, curLineNumber - lineNumber);
     else
-        tempCursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor, lineNumber - curLineNumber-1);
+        tempCursor.movePosition(QTextCursor::NextBlock, QTextCursor::MoveAnchor, lineNumber - curLineNumber);
     this->setTextCursor(tempCursor);
 }
 

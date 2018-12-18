@@ -1,6 +1,4 @@
 #include "codehighlighter.h"
-#include <QDebug>
-#include <QToolTip>
 
 CodeHighlighter::CodeHighlighter(QTextDocument *parent) : QSyntaxHighlighter (parent)
 {
@@ -17,32 +15,20 @@ CodeHighlighter::CodeHighlighter(QTextDocument *parent) : QSyntaxHighlighter (pa
     highlighterFormat[TOKEN_TYPE_STR].setForeground(QColor("#d69545"));
     highlighterFormat[TOKEN_TYPE_COMMENT].setForeground(QColor("#808080"));
 
-    highlighterFormat[TOKEN_TYPE_UNKNOWN].setToolTip("TOKEN_TYPE_UNKNOWN");
-    highlighterFormat[TOKEN_TYPE_KEYWORD].setToolTip("TOKEN_TYPE_KEYWORD");
-    highlighterFormat[TOKEN_TYPE_IDENTIFIER].setToolTip("TOKEN_TYPE_IDENTIFIER");
-    highlighterFormat[TOKEN_TYPE_DELIMITER].setToolTip("TOKEN_TYPE_DELIMITER");
-    highlighterFormat[TOKEN_TYPE_INT].setToolTip("TOKEN_TYPE_INT");
-    highlighterFormat[TOKEN_TYPE_FLOAT].setToolTip("TOKEN_TYPE_FLOAT");
-    highlighterFormat[TOKEN_TYPE_CHAR].setToolTip("TOKEN_TYPE_CHAR");
-    highlighterFormat[TOKEN_TYPE_STR].setToolTip("TOKEN_TYPE_STR");
-    highlighterFormat[TOKEN_TYPE_COMMENT].setToolTip("TOKEN_TYPE_COMMENT");
-
     scanner = new Scan;
-    scanner->tokens.clear();
     scanner->initFrom(this->document()->toPlainText().toStdString());
     if(scanner->errPos != -1)
     {
         closeHighlighter(0, 0, 0);
-        QMessageBox msg;
-        msg.setIcon(QMessageBox::Warning);
-        msg.setWindowTitle("语法分析遇到问题");
+        QMessageBox msg(static_cast<QWidget*>(this->parent()->parent()->parent()));
+        msg.setIcon(QMessageBox::Critical);
+        msg.setWindowTitle("词法分析遇到问题");
         if(scanner->errPos == 0)
             msg.setText(std::string("错误原因\n\n"+scanner->errMessage).c_str());
         else
             msg.setText(std::string("第"+std::to_string(scanner->errLine+1)+"行\n\n"+scanner->errMessage).c_str());
-        msg.addButton(QMessageBox::Yes);
+        msg.addButton(QMessageBox::Ok);
         msg.exec();
-
         return;
     }
     enable = true;
