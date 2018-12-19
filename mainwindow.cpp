@@ -218,6 +218,12 @@ void MainWindow::setupMenuAndToolBar()
     compileMenu->addAction(synAction);
     toolBar->addAction(synAction);
 
+    QAction *elemAction = new QAction(QIcon::fromTheme("labplot-4x-zoom"), "生成四元式", this);
+    elemAction->setStatusTip("生成四元式");
+    connect(elemAction, SIGNAL(triggered()), this, SLOT(show4Elem()));
+    compileMenu->addAction(elemAction);
+    toolBar->addAction(elemAction);
+
     QAction *compileAction = new QAction(QIcon::fromTheme("run-build-configure"), "编译（查看汇编代码）", this);
     compileAction->setStatusTip("编译（查看汇编代码）");
     connect(compileAction, SIGNAL(triggered()), this, SLOT(runCompile()));
@@ -298,6 +304,49 @@ void MainWindow::runSyntactic()
     }
 }
 
+void MainWindow::show4Elem()
+{
+    Scan scanner;
+    scanner.initFrom(codeEditor->document()->toPlainText().toStdString());
+    if(scanner.errPos != -1)
+    {
+        QMessageBox msg(this);
+        msg.setIcon(QMessageBox::Critical);
+        msg.setWindowTitle("词法分析遇到问题");
+        if(scanner.errPos == 0)
+            msg.setText(std::string("错误原因\n\n"+scanner.errMessage).c_str());
+        else
+            msg.setText(std::string("第"+std::to_string(scanner.errLine+1)+"行\n\n"+scanner.errMessage).c_str());
+        msg.addButton(QMessageBox::Ok);
+        msg.exec();
+        return;
+    }
+    Syntax syn(scanner);
+    if(syn.program() == 0&&syn.scanner.next().isEOF())
+    {
+        syn.scanner.curIndex = 0;
+        syn.prepare_for_4elem();
+        gen4elem();
+        /*for(int i = 0; i < elems.size(); i++)
+        {
+            printf("%d: ", i);
+            elems[i].output();
+        }*/
+        return;
+    }
+    else
+    {
+        QMessageBox msg(this);
+        msg.setIcon(QMessageBox::Critical);
+        msg.setWindowTitle("语法分析遇到问题");
+        msg.setText(std::string("第"+std::to_string(syn.scanner.tokens.at(syn.errPos).lineNumber+1)+"行\n\n"+syn.errMessage+syn.scanner.tokens.at(syn.errPos).name).c_str());
+        msg.addButton(QMessageBox::Ok);
+        msg.exec();
+        showError(syn.scanner.tokens.at(syn.errPos).lineNumber+1, syn.errMessage+syn.scanner.tokens.at(syn.errPos).name);
+        return;
+    }
+}
+
 void MainWindow::runCompile()
 {
 
@@ -305,5 +354,40 @@ void MainWindow::runCompile()
 
 void MainWindow::runRun()
 {
+    QString command;
+    QStringList arguments;
+    QProcess *haveDosbox = new QProcess(this);
+    haveDosbox->setProcessChannelMode(QProcess::MergedChannels);
+    command = "/usr/bin/dosbox";
 
+    arguments.clear();
+    arguments << "--version";
+    haveDosbox->start(command, arguments);
+    haveDosbox->waitForFinished(-1);
+    if(haveDosbox->readAllStandardOutput().size() == 0)
+    {
+        QMessageBox msg(this);
+        msg.setIcon(QMessageBox::Critical);
+        msg.setWindowTitle("缺少运行环境");
+        msg.setTextFormat(Qt::RichText);
+        msg.setText("需要x86模拟器 DOSBox<br/><br/>官方网站：<a href=\"https://www.dosbox.com/\">https://www.dosbox.com/</a>");
+        msg.addButton(QMessageBox::Ok);
+        msg.exec();
+    }
+    else
+    {
+        QProcess *runDosbox = new QProcess(this);
+        QString dosDir = "/home/nian/dos/";
+        QString fileBaseName = "test";
+        arguments.clear();
+        arguments << "-c" << "mount C: " + dosDir
+                  << "-c" << "path %path%;C:\\tools\\"
+                  << "-c" << "C:"
+                  << "-c" << "masm " + fileBaseName + ".asm," + fileBaseName + ".obj;"
+                  << "-c" << "link " + fileBaseName + ".obj," + fileBaseName + ".exe;"
+                  << "-c" << fileBaseName + ".exe"
+                  << "-c" << "pause"
+                  << "-c" << "exit";
+        runDosbox->start(command, arguments);
+    }
 }

@@ -109,6 +109,7 @@ public slots:
     void documentWasModified();
     void runLexical();
     void runSyntactic();
+    void show4Elem();
     void runCompile();
     void runRun();
 
