@@ -405,6 +405,11 @@ void Syntax::prepare_for_4elem()
                 scanner.next();
                 return;
             }
+        case PROCESS_MULOP_3:
+            {
+                scanner.next();
+                return;
+            }
         case PROCESS_FACTOR_1:
             {
                 scanner.next();
@@ -2021,7 +2026,7 @@ int Syntax::factor()
             temp = scanner.next();
             if(temp.isDelimiter()&&temp.name == std::string(")"))
             {
-                return 0;   // 62 <factor> := ( <expression> )
+                return 0;   // 63 <factor> := ( <expression> )
             }
             else
             {
@@ -2047,7 +2052,7 @@ int Syntax::factor()
         //addCon(temp.identifierAndIntPos,temp.valueInt);
         //alPush(temp.identifierAndIntPos);
         syntaxProcess.at(ori_process) = PROCESS_FACTOR_4;
-        return 0;   // 65 <factor> := NUM
+        return 0;   // 66 <factor> := NUM
     }
     else
     {
@@ -2057,7 +2062,7 @@ int Syntax::factor()
         res = call();
         if(res == 0)
         {
-            return 0;   // 64 <factor> := <call>
+            return 0;   // 65 <factor> := <call>
         }
         else
         {
@@ -2067,7 +2072,7 @@ int Syntax::factor()
             res = var();
             if(res == 0)
             {
-                return 0;   // 63 <factor> := <var>
+                return 0;   // 64 <factor> := <var>
             }
             else
             {
@@ -2094,6 +2099,11 @@ int Syntax::mulop()
     {
         syntaxProcess.push_back(PROCESS_MULOP_2);
         return 0;   // 61 <mulop> := /
+    }
+    else if(temp.isDelimiter()&&temp.name == std::string("%"))
+    {
+        syntaxProcess.push_back(PROCESS_MULOP_3);
+        return 0;   // 62 <mulop> := %
     }
     else
     {
@@ -2131,7 +2141,7 @@ int Syntax::call()
                 if(temp.isDelimiter()&&temp.name == std::string(")"))
                 {
                     //callEnd();
-                    return 0;   // 66 <call> := ID ( <args> )
+                    return 0;   // 67 <call> := ID ( <args> )
                 }
                 else
                 {
@@ -2189,14 +2199,14 @@ int Syntax::args()
     res = arg_list();
     if(res == 0)
     {
-        return 0;   // 67 <args> := <arg_list>
+        return 0;   // 68 <args> := <arg_list>
     }
     else
     {
         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_ARGS_2);
         scanner.setIndex(ori_index);
-        return 0;   // 68 <args> := <empty>
+        return 0;   // 69 <args> := <empty>
     }
 }
 
@@ -2216,7 +2226,7 @@ int Syntax::arg_list()
         res = arg_list_tail();
         if(res == 0)
         {
-            return 0;   // 69 <arg_list> := <expression> <arg_list_tail>
+            return 0;   // 70 <arg_list> := <expression> <arg_list_tail>
         }
         else
         {
@@ -2252,14 +2262,14 @@ int Syntax::arg_list_tail()
             res = arg_list_tail();
             if(res == 0)
             {
-                return 0;   // 70 <arg_list_tail> := , <expression> <arg_list_tail>
+                return 0;   // 71 <arg_list_tail> := , <expression> <arg_list_tail>
             }
             else
             {
                 while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 syntaxProcess.push_back(PROCESS_ARG_LIST_TAIL_2);
                 scanner.setIndex(ori_index);
-                return 0;   // 71 <arg_list_tail> := <empty>
+                return 0;   // 72 <arg_list_tail> := <empty>
             }
         }
         else
@@ -2267,7 +2277,7 @@ int Syntax::arg_list_tail()
             while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_ARG_LIST_TAIL_2);
             scanner.setIndex(ori_index);
-            return 0;   // 71 <arg_list_tail> := <empty>
+            return 0;   // 72 <arg_list_tail> := <empty>
         }
     }
     else
@@ -2275,6 +2285,6 @@ int Syntax::arg_list_tail()
         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_ARG_LIST_TAIL_2);
         scanner.setIndex(ori_index);
-        return 0;   // 71 <arg_list_tail> := <empty>
+        return 0;   // 72 <arg_list_tail> := <empty>
     }
 }

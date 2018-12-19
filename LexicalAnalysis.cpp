@@ -39,7 +39,7 @@ Scan::Scan(std::string filename)
         stateCur = stateChange(stateBefore, ch);
         if(stateCur > 0)
         {
-            if(stateCur == STATE_BEGIN&&(ch == '\r'||ch == '\n'||ch == ' ')) continue;
+            if(stateCur == STATE_BEGIN&&(ch == '\r'||ch == '\n'||ch == ' '||ch == '\t')) continue;
             token[tokenLen++] = ch;
         }
         else if(stateCur < 0)
@@ -57,7 +57,7 @@ Scan::Scan(std::string filename)
             parseState(stateBefore, token);
             stateCur = stateChange(STATE_BEGIN, ch);
             tokenLen = 0;
-            if(stateCur == STATE_BEGIN&&(ch == '\r'||ch == '\n'||ch == ' ')) continue;
+            if(stateCur == STATE_BEGIN&&(ch == '\r'||ch == '\n'||ch == ' '||ch == '\t')) continue;
             token[tokenLen++] = ch;
         }
     }
@@ -111,7 +111,7 @@ void Scan::initFrom(std::string plainText)
         stateCur = stateChange(stateBefore, ch);
         if(stateCur > 0)
         {
-            if(stateCur == STATE_BEGIN&&(ch == '\r'||ch == '\n'||ch == ' ')) continue;
+            if(stateCur == STATE_BEGIN&&(ch == '\r'||ch == '\n'||ch == ' '||ch == '\t')) continue;
             token[tokenLen++] = ch;
         }
         else if(stateCur < 0)
@@ -128,7 +128,7 @@ void Scan::initFrom(std::string plainText)
             parseState(stateBefore, token);
             stateCur = stateChange(STATE_BEGIN, ch);
             tokenLen = 0;
-            if(stateCur == STATE_BEGIN&&(ch == '\r'||ch == '\n'||ch == ' ')) continue;
+            if(stateCur == STATE_BEGIN&&(ch == '\r'||ch == '\n'||ch == ' '||ch == '\t')) continue;
             token[tokenLen++] = ch;
         }
     }
@@ -154,7 +154,7 @@ void Scan::initTable()
     keyWordTable[4] = std::string("void");
     keyWordTable[5] = std::string("while");
 
-    numberOfDelimiter = 19;
+    numberOfDelimiter = 20;
     delimiterTable[0] = std::string("+");
     delimiterTable[1] = std::string("-");
     delimiterTable[2] = std::string("*");
@@ -174,6 +174,7 @@ void Scan::initTable()
     delimiterTable[16] = std::string("]");
     delimiterTable[17] = std::string("{");
     delimiterTable[18] = std::string("}");
+    delimiterTable[19] = std::string("%");
 
     identifierTable.clear();
     intTable.clear();
@@ -200,7 +201,7 @@ int Scan::stateChange(int stateBefore, char ch)
                     return STATE_WORD;
                 else if(ch >= '0'&&ch <= '9')
                     return STATE_INT;
-                else if(ch == '\r'||ch == '\n'||ch == ' ')
+                else if(ch == '\r'||ch == '\n'||ch == ' '||ch == '\t')
                     return STATE_BEGIN;
                 else if(ch == '\'')
                     return STATE_CHAR_L;
@@ -208,7 +209,7 @@ int Scan::stateChange(int stateBefore, char ch)
                     return STATE_STR_L;
                 else if(ch == '<'||ch == '>'||ch == '='||ch == '!')
                     return STATE_DELIMITER_L;
-                else if(ch == '+'||ch == '-'||ch == '*')
+                else if(ch == '+'||ch == '-'||ch == '*'||ch == '%')
                     return STATE_DELIMITER_R;
                 else if(ch == '/')
                     return STATE_COMMENT_MAYBE;

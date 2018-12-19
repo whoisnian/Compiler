@@ -65,16 +65,17 @@ const int PROCESS_TERM_TAIL_1               = 58;
 const int PROCESS_TERM_TAIL_2               = 59;
 const int PROCESS_MULOP_1                   = 60;
 const int PROCESS_MULOP_2                   = 61;
-const int PROCESS_FACTOR_1                  = 62;
-const int PROCESS_FACTOR_2                  = 63;
-const int PROCESS_FACTOR_3                  = 64;
-const int PROCESS_FACTOR_4                  = 65;
-const int PROCESS_CALL                      = 66;
-const int PROCESS_ARGS_1                    = 67;
-const int PROCESS_ARGS_2                    = 68;
-const int PROCESS_ARG_LIST                  = 69;
-const int PROCESS_ARG_LIST_TAIL_1           = 70;
-const int PROCESS_ARG_LIST_TAIL_2           = 71;
+const int PROCESS_MULOP_3                   = 62;
+const int PROCESS_FACTOR_1                  = 63;
+const int PROCESS_FACTOR_2                  = 64;
+const int PROCESS_FACTOR_3                  = 65;
+const int PROCESS_FACTOR_4                  = 66;
+const int PROCESS_CALL                      = 67;
+const int PROCESS_ARGS_1                    = 68;
+const int PROCESS_ARGS_2                    = 69;
+const int PROCESS_ARG_LIST                  = 70;
+const int PROCESS_ARG_LIST_TAIL_1           = 71;
+const int PROCESS_ARG_LIST_TAIL_2           = 72;
 
 class Syntax
 {

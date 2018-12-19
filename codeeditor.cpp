@@ -21,6 +21,7 @@ CodeEditor::CodeEditor(QWidget *parent) : QPlainTextEdit(parent)
     this->updateLineNumberAreaWidth(0);
     this->highlightCurrentLine();
     this->setCursorWidth(2);
+    this->setTabStopDistance(this->tabStopDistance()/2);
     this->document()->setDocumentMargin(0);
     this->curFile = "untitled.txt";
 }

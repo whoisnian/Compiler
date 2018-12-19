@@ -80,6 +80,7 @@ const char synText[100][100] = {
 "<term_tail> := <empty>",
 "<mulop> := *",
 "<mulop> := /",
+"<mulop> := %",
 "<factor> := ( <expression> )",
 "<factor> := <var>",
 "<factor> := <call>",
