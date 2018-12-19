@@ -1,22 +1,5 @@
 #include "paramtable.h"
-vector<synbl> synb;
-vector<pfinfl> pfinf;
-stack<int> Funcs;
-stack<int> calls, callParams;
-vector<ainfl> ainf;
-vector<consl> cons;
-vector<elem> elems;
-int size_pfinfl;
-int size_ainfl;
-int size_consl;
-int size_tmp;
-int loc_main;
-int id_tmp;
-stack<char> alNums;
-map<int, int> table_synb, table_pfinf, table_cons;
-vector<vall> valls;
-vector<vall> basicValls;
-void initAll()
+void ParamTable::initAll()
 {
 #ifdef DEBUG
     cout << "initAll" << endl;
@@ -45,7 +28,7 @@ void initAll()
     table_cons.clear();
     id_tmp = 100; //临时变量的开始值
 }
-void addFun(int id)
+void ParamTable::addFun(int id)
 {
 #ifdef DEBUG
     cout << "addFun" << ' ' << id << endl;
@@ -70,7 +53,7 @@ void addFun(int id)
     Funcs.push(synb[synb.size() - 1].addr);
     elems.push_back(elem("fun", id, -1, -1));
 }
-void backFun()
+void ParamTable::backFun()
 {
 #ifdef DEBUG
     cout << "backFun" << endl;
@@ -79,7 +62,7 @@ void backFun()
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("funend", -1, -1, -1));
 }
-void addNum(int id, bool isparam)
+void ParamTable::addNum(int id, bool isparam)
 {
 #ifdef DEBUG
     cout << "addNum" << ' ' << id << ' ' << isparam << endl;
@@ -100,7 +83,7 @@ void addNum(int id, bool isparam)
     else
         pfinf[Funcs.top()].synbs.push_back(synb.size() - 1);
 }
-void addArray(int id, int len, bool isparam)
+void ParamTable::addArray(int id, int len, bool isparam)
 {
 #ifdef DEBUG
     cout << "addArray" << ' ' << id << endl;
@@ -134,7 +117,7 @@ void addArray(int id, int len, bool isparam)
         }
     }
 }
-void addCon(int id, int data)
+void ParamTable::addCon(int id, int data)
 {
 #ifdef DEBUG
     cout << "addCon" << endl;
@@ -159,7 +142,7 @@ void addCon(int id, int data)
     pfinf[Funcs.top()].synbs.push_back(synb.size() - 1);
     table_cons.insert(make_pair(id, data));
 }
-void alGeq(string op)
+void ParamTable::alGeq(string op)
 {
 #ifdef DEBUG
     cout << "alGeq" << ' ' << op << endl;
@@ -198,14 +181,14 @@ void alGeq(string op)
         id_tmp++;
     }
 }
-void alPush(int id, int arrayidx)
+void ParamTable::alPush(int id, int arrayidx)
 { //之后要加一堆处理
 #ifdef DEBUG
     cout << "alPush" << ' ' << id << endl;
 #endif
     alNums.push(id);
 }
-void alPop()
+void ParamTable::alPop()
 {
 #ifdef DEBUG
     cout << "alPop" << endl;
@@ -217,7 +200,7 @@ void alPop()
     }
     alNums.pop();
 }
-void exIf()
+void ParamTable::exIf()
 {
 #ifdef DEBUG
     cout << "exIf" << endl;
@@ -233,7 +216,7 @@ void exIf()
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("if", id1, -1, -1));
 }
-void exIe()
+void ParamTable::exIe()
 {
 #ifdef DEBUG
     cout << "exIe" << endl;
@@ -241,7 +224,7 @@ void exIe()
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("ie", -1, -1, -1));
 }
-void exEl()
+void ParamTable::exEl()
 {
 #ifdef DEBUG
     cout << "exEl" << endl;
@@ -249,7 +232,7 @@ void exEl()
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("el", -1, -1, -1));
 }
-void exWh()
+void ParamTable::exWh()
 {
 #ifdef DEBUG
     cout << "exWh" << endl;
@@ -257,7 +240,7 @@ void exWh()
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("wh", -1, -1, -1));
 }
-void exDo()
+void ParamTable::exDo()
 {
 #ifdef DEBUG
     cout << "exDo" << endl;
@@ -273,7 +256,7 @@ void exDo()
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("do", id1, -1, -1));
 }
-void exWe()
+void ParamTable::exWe()
 {
 #ifdef DEBUG
     cout << "exWe" << endl;
@@ -281,7 +264,7 @@ void exWe()
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("we", -1, -1, -1));
 }
-void callBegin(int id)
+void ParamTable::callBegin(int id)
 {
 #ifdef DEBUG
     cout << "callBegin" << ' ' << id << endl;
@@ -300,7 +283,7 @@ void callBegin(int id)
     alNums.push(id_tmp);
     id_tmp++;
 }
-void callEnd()
+void ParamTable::callEnd()
 {
 #ifdef DEBUG
     cout << "callEnd" << endl;
@@ -327,7 +310,7 @@ void callEnd()
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("callend", -1, -1, -1));
 }
-void callParam()
+void ParamTable::callParam()
 {
 #ifdef DEBUG
     cout << "callParam" << endl;
@@ -347,7 +330,7 @@ void callParam()
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("params", -1, -1, id1));
 }
-void retNum()
+void ParamTable::retNum()
 {
     int id1;
     id1 = alNums.top();
@@ -355,12 +338,12 @@ void retNum()
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("retnum", -1, -1, id1));
 }
-void retNonum()
+void ParamTable::retNonum()
 {
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("ret", -1, -1, -1));
 }
-void gen4elem() //处理四元式的if，while等语句的跳转位置并输出四元式用来调试
+void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位置并输出四元式用来调试
 {
 #ifdef DEBUG
     cout << "wow we are generating elems!" << endl;
@@ -411,7 +394,7 @@ void gen4elem() //处理四元式的if，while等语句的跳转位置并输出�
         elems[i].output();
     }
 }
-void genValls() //生成活动记录表
+void ParamTable::genValls() //生成活动记录表
 {
     basicValls.clear();
     vall nowvall;
@@ -443,7 +426,7 @@ void genValls() //生成活动记录表
         basicValls.push_back(nowvall);
     }
 }
-void outputParam()
+void ParamTable::outputParam()
 { //输出参数表内容
     int i, j;
     printf("-----synbl-----\n");
@@ -491,7 +474,7 @@ void outputParam()
         printf("%d\n", basicValls[i].size);
     }
 }
-void toax(int k, int id) //输出到从内存提取到ax的汇编指令
+void ParamTable::toax(int k, int id) //输出到从内存提取到ax的汇编指令
 {
     if (table_cons.count(id))
     {
@@ -508,7 +491,7 @@ void toax(int k, int id) //输出到从内存提取到ax的汇编指令
         cout << "MOV   AX,[BP-" << id + 2 << "]" << endl;
     }
 }
-void tobx(int k, int id) //输出到从内存提取到ax的汇编指令
+void ParamTable::tobx(int k, int id) //输出到从内存提取到ax的汇编指令
 {
     if (table_cons.count(id))
     {
@@ -525,7 +508,7 @@ void tobx(int k, int id) //输出到从内存提取到ax的汇编指令
         cout << "MOV   BX,[BP-" << id + 2 << "]" << endl;
     }
 }
-void axto(int k, int id) //输出到从ax提取到内存的汇编指令
+void ParamTable::axto(int k, int id) //输出到从ax提取到内存的汇编指令
 {
     if (basicValls[0].var.count(id))
     {
@@ -538,7 +521,7 @@ void axto(int k, int id) //输出到从ax提取到内存的汇编指令
         cout << "MOV   [BP-" << id + 2 << "],AX" << endl;
     }
 }
-void jgjp(int k, string st, int tg) //符合条件则跳转
+void ParamTable::jgjp(int k, string st, int tg) //符合条件则跳转
 {
     if (st == "jmp")
     {
@@ -569,7 +552,7 @@ void jgjp(int k, string st, int tg) //符合条件则跳转
         cout << "JNB   F" << k << "T" << tg << endl;
     }
 }
-void genAssembly()
+void ParamTable::genAssembly()
 {
     int i, j, k, id0, id1, id2, tmpjmp = -1, tmp, tmpsynb;
     string tmpst;

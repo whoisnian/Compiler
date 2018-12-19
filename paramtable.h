@@ -67,6 +67,30 @@ struct vall{
     int parsize,size;
     int retaddr;
 };
+
+class ParamTable
+{
+public:
+    ParamTable(){}
+
+vector<synbl> synb;
+vector<pfinfl> pfinf;
+stack<int> Funcs;
+stack<int> calls, callParams;
+vector<ainfl> ainf;
+vector<consl> cons;
+vector<elem> elems;
+int size_pfinfl;
+int size_ainfl;
+int size_consl;
+int size_tmp;
+int loc_main;
+int id_tmp;
+stack<char> alNums;
+map<int, int> table_synb, table_pfinf, table_cons;
+vector<vall> valls;
+vector<vall> basicValls;
+
 void initAll();
 void addFun(int id);
 void backFun();
@@ -91,4 +115,11 @@ void gen4elem();
 void genValls();
 void outputParam();
 void genAssembly();
+
+void toax(int k, int id);
+void tobx(int k, int id);
+void axto(int k, int id);
+void jgjp(int k, string st, int tg);
+
+};
 #endif // PARAMTABLE_H_INCLUDED

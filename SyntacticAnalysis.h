@@ -77,7 +77,7 @@ const int PROCESS_ARG_LIST                  = 70;
 const int PROCESS_ARG_LIST_TAIL_1           = 71;
 const int PROCESS_ARG_LIST_TAIL_2           = 72;
 
-class Syntax
+class Syntax : public ParamTable
 {
     public:
         Scan scanner;                   // 词法扫描器
