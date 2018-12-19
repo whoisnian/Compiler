@@ -9,6 +9,7 @@
 #include <QMenu>
 #include <QStatusBar>
 #include <QToolBar>
+#include <QProcess>
 #include <QHeaderView>
 #include <QTableWidget>
 #include "codeeditor.h"
@@ -75,7 +76,7 @@ const char synText[100][100] = {
 "<addop> := +",
 "<addop> := -",
 "<term> := <factor> <term_tail>",
-"<term_tail> := <mulop> <factor>",
+"<term_tail> := <mulop> <factor> <term_tail>",
 "<term_tail> := <empty>",
 "<mulop> := *",
 "<mulop> := /",

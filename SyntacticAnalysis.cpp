@@ -357,8 +357,8 @@ void Syntax::prepare_for_4elem()
                 scanner.back();
                 Token op = scanner.next();
                 prepare_for_4elem();
-                prepare_for_4elem();
                 alGeq(op.name);
+                prepare_for_4elem();
                 return;
             }
         case PROCESS_ADDITIVE_EXPRESSION_TAIL_2:
@@ -388,6 +388,7 @@ void Syntax::prepare_for_4elem()
                 Token op = scanner.next();
                 prepare_for_4elem();
                 alGeq(op.name);
+                prepare_for_4elem();
                 return;
             }
         case PROCESS_TERM_TAIL_2:
@@ -1815,10 +1816,10 @@ int Syntax::additive_expression_tail()
         res = term();
         if(res == 0)
         {
+            //alGeq(temp.name);
             res = additive_expression_tail();
             if(res == 0)
             {
-                //alGeq(temp.name);
                 return 0;   // 53 <additive_expression_tail> := <addop> <term> <additive_expression_tail>
             }
             else
@@ -1944,7 +1945,18 @@ int Syntax::term_tail()
         if(res == 0)
         {
             //alGeq(temp.name);
-            return 0;   // 58 <term_tail> := <mulop> <factor>
+            res = term_tail();
+            if(res == 0)
+            {
+                return 0;   // 58 <term_tail> := <mulop> <factor> <term_tail>
+            }
+            else
+            {
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                syntaxProcess.push_back(PROCESS_TERM_TAIL_2);
+                scanner.setIndex(ori_index);
+                return 0;   // 59 <term_tail> := <empty>
+            }
         }
         else
         {

@@ -139,18 +139,20 @@ void addCon(int id, int data)
 #ifdef DEBUG
     cout << "addCon" << endl;
 #endif
-    for (int i = 0; i < cons.size(); i++)
+    /*for (int i = 0; i < cons.size(); i++)
     {
         if (cons[i].data == data)
         {
+            pfinf[Funcs.top()].synbs.push_back(cons[i].loc);
             return;
         }
-    }
+    }*/
     synbl newS;
     consl newC;
     newS.name = id;
     newS.cat = 'c';
     newC.data = data;
+    newC.loc = synb.size();
     cons.push_back(newC);
     newS.addr = cons.size() - 1;
     synb.push_back(newS);
@@ -196,7 +198,7 @@ void alGeq(string op)
         id_tmp++;
     }
 }
-void alPush(int id, bool isarray)
+void alPush(int id, int arrayidx)
 { //之后要加一堆处理
 #ifdef DEBUG
     cout << "alPush" << ' ' << id << endl;
@@ -322,6 +324,8 @@ void callEnd()
     }
     calls.pop();
     callParams.pop();
+    pfinf[Funcs.top()].elems.push_back(elems.size());
+    elems.push_back(elem("callend", -1, -1, -1));
 }
 void callParam()
 {
@@ -341,7 +345,7 @@ void callParam()
     callParams.pop();
     callParams.push(++num);
     pfinf[Funcs.top()].elems.push_back(elems.size());
-    elems.push_back(elem("params", id1, -1, -1));
+    elems.push_back(elem("params", -1, -1, id1));
 }
 void retNum()
 {
@@ -424,6 +428,8 @@ void genValls() //生成活动记录表
             nowvall.var.insert(make_pair(synb[pfinf[k].param[i]].name, sum));
             sum += 2;
         }
+        nowvall.parsize = sum;
+        sum += 2; //为call内的ip留个位置
         for (i = 0; i < pfinf[k].synbs.size(); i++)
         {
             nowvall.var.insert(make_pair(synb[pfinf[k].synbs[i]].name, sum));
@@ -494,29 +500,29 @@ void toax(int k, int id) //输出到从内存提取到ax的汇编指令
     else if (basicValls[0].var.count(id))
     {
         id = basicValls[0].var[id];
-        cout << "MOV   AX,[BX+" << id << "]" << endl;
+        cout << "MOV   AX,[DI+" << id << "]" << endl;
     }
     else
     {
         id = basicValls[k].var[id];
-        cout << "MOV   AX,[BP-" << id << "]" << endl;
+        cout << "MOV   AX,[BP-" << id + 2 << "]" << endl;
     }
 }
-void tocx(int k, int id) //输出到从内存提取到ax的汇编指令
+void tobx(int k, int id) //输出到从内存提取到ax的汇编指令
 {
     if (table_cons.count(id))
     {
-        cout << "MOV   AX," << table_cons[id] << endl;
+        cout << "MOV   BX," << table_cons[id] << endl;
     }
     else if (basicValls[0].var.count(id))
     {
         id = basicValls[0].var[id];
-        cout << "MOV   CX,[BX+" << id << "]" << endl;
+        cout << "MOV   BX,[DI+" << id << "]" << endl;
     }
     else
     {
         id = basicValls[k].var[id];
-        cout << "MOV   CX,[BP-" << id << "]" << endl;
+        cout << "MOV   BX,[BP-" << id + 2 << "]" << endl;
     }
 }
 void axto(int k, int id) //输出到从ax提取到内存的汇编指令
@@ -524,12 +530,12 @@ void axto(int k, int id) //输出到从ax提取到内存的汇编指令
     if (basicValls[0].var.count(id))
     {
         id = basicValls[0].var[id];
-        cout << "MOV   [BX+" << id << "],AX" << endl;
+        cout << "MOV   [DI+" << id << "],AX" << endl;
     }
     else
     {
         id = basicValls[k].var[id];
-        cout << "MOV   [BP-" << id << "],AX" << endl;
+        cout << "MOV   [BP-" << id + 2 << "],AX" << endl;
     }
 }
 void jgjp(int k, string st, int tg) //符合条件则跳转
@@ -565,10 +571,10 @@ void jgjp(int k, string st, int tg) //符合条件则跳转
 }
 void genAssembly()
 {
-    int i, j, k, id0, id1, id2, tmpjmp = -1;
+    int i, j, k, id0, id1, id2, tmpjmp = -1, tmp, tmpsynb;
     string tmpst;
     elem tmpelem("", -1, -1, -1);
-    cout << "SSEG  SEGMENT STACK" << endl;
+    cout << "SSEG  SEGMENT" << endl;
     cout << "SKTOP DW 200 DUP(?)" << endl;
     cout << "SSEG  ENDS" << endl;
     cout << "DSEG  SEGMENT" << endl;
@@ -579,19 +585,29 @@ void genAssembly()
     for (k = 1; k < pfinf.size(); k++)
     {
         if (k != pfinf.size() - 1)
+        {
             cout << "FUN" << k << "  PROC NEAR" << endl;
+            cout << "MOV   CX," << (basicValls[k].size - basicValls[k].parsize - 2)/2 << endl;
+            cout << "F" << k << "IN: NOP" << endl;
+            cout << "PUSH  AX" << endl; //存临时变量和参数
+            cout << "LOOP  F" << k << "IN" << endl;
+            cout << "MOV   BP,SI" << endl;
+            cout << "PUSH  BP" << endl;
+        }
         else
         {
             cout << "START:MOV   AX,DSEG" << endl;
             cout << "MOV   DS,AX" << endl;
+            cout << "MOV   AX,SSEG" << endl;
+            cout << "MOV   SS,AX" << endl;
             cout << "MOV   BP,SP" << endl;           //BP：当前函数栈顶
-            cout << "MOV   BX,OFFSET MAINV" << endl; //SI：全局变量
+            cout << "MOV   DI,OFFSET MAINV" << endl; //DI：全局变量
             cout << "MOV   AX,0" << endl;
-            cout << "MOV   CX," << basicValls[k].size << endl;
+            cout << "MOV   CX," << basicValls[k].size/2 << endl;
             cout << "F" << k << "IN: NOP" << endl;
-            cout << "PUSH  AX" << endl;
+            cout << "PUSH  AX" << endl; //存临时变量和参数
             cout << "LOOP  F" << k << "IN" << endl;
-            cout << "PUSH  BP" << endl;
+            cout << "PUSH  BP" << endl; //存bp
         }
         /*for (i = 0; i < pfinf[k].param.size(); i++)
             if (synb[pfinf[k].param[i]].cat == 'c')
@@ -616,7 +632,7 @@ void genAssembly()
             else if (tmpelem.iscntop())
             {
                 toax(k, tmpelem.id1);
-                tocx(k, tmpelem.id2);
+                tobx(k, tmpelem.id2);
                 if (tmpelem.st == "+")
                 {
                     cout << "ADD   AX,BX" << endl;
@@ -643,7 +659,7 @@ void genAssembly()
             else if (tmpelem.isjugop())
             {
                 toax(k, tmpelem.id1);
-                tocx(k, tmpelem.id2);
+                tobx(k, tmpelem.id2);
                 cout << "CMP   AX,BX" << endl;
                 cout << "MOV   AX,1" << endl;
                 jgjp(0, tmpelem.st, ++tmpjmp);
@@ -659,10 +675,10 @@ void genAssembly()
             }
             else if (tmpelem.st == "ie")
             {
-                jgjp(k, "JMP", tmpelem.id0);
             }
             else if (tmpelem.st == "el")
             {
+                jgjp(k, "jmp", tmpelem.id0);
             }
             else if (tmpelem.st == "wh")
             {
@@ -679,21 +695,77 @@ void genAssembly()
             }
             else if (tmpelem.st == "call")
             {
+                cout << "MOV   SI,SP" << endl;
+                tmp = table_pfinf[tmpelem.id1];
+                tmp = synb[tmp].addr;
+                tmpsynb = tmpelem.id2;
             }
             else if (tmpelem.st == "params")
             {
-
-                cout << "MOV   AX,[BP-SI]" << endl;
+                toax(k, tmpelem.id0);
                 cout << "PUSH  AX" << endl;
+            }
+            else if (tmpelem.st == "callend")
+            {
+                cout << "CALL  FUN" << tmp << endl;
+                cout << "POP   AX" << endl;
+                axto(k, tmpsynb);
+            }
+            else if (tmpelem.st == "retnum")
+            {
+                if (k != pfinf.size() - 1)
+                {
+                    toax(k, tmpelem.id0);
+                    cout<<"JMP   F"<<k<<"O"<<endl;
+                }
+                else
+                {
+                    cout << "MOV   AH,4CH" << endl;
+                    cout << "INT   21H" << endl;
+                }
+            }
+            else if (tmpelem.st == "ret")
+            {//此处需要照retnum修改
+                if (k != pfinf.size() - 1)
+                {
+                    cout<<"JMP   F"<<k<<"O"<<endl;
+                }
+                else
+                {
+                    cout << "MOV   AH,4CH" << endl;
+                    cout << "INT   21H" << endl;
+                }
             }
         }
         if (k != pfinf.size() - 1)
+        {
+            cout<<"F"<<k<<"O:  NOP"<<endl;
+            cout << "MOV   CX," << (basicValls[k].size -basicValls[k].parsize)/2 << endl;
+            cout << "F" << k << "O1:NOP" << endl;
+            cout << "POP   DX" << endl; //释放临时变量栈空间（size-psize-2)+旧BP（2）
+            cout << "LOOP  F" << k << "O1" << endl;
+            cout << "POP   SI" << endl; //取出IP
+            cout << "MOV   CX," << basicValls[k].parsize/2 << endl;
+            cout << "F" << k << "O2:NOP" << endl;
+            cout << "POP   DX" << endl; //释放参数栈空间
+            cout << "LOOP  F" << k << "O2" << endl;
+            cout << "POP   BP" << endl;
+            cout << "PUSH  BP" << endl;
+            cout << "PUSH  AX" << endl;
+            cout << "PUSH  SI" << endl; //存回IP
+            cout << "RET" << endl;
             cout << "FUN" << k << "  ENDP" << endl;
+        }
         else
         {
+            cout << "MOV   AH,4CH" << endl;
+            cout << "INT   21H" << endl;
             cout << "CSEG  ENDS" << endl;
             cout << "      END   START" << endl;
         }
     }
     valls.clear();
 }
+/*
+要解决的问题：出栈入栈的位置对不对？代码段和堆栈段冲突如何解决？
+*/

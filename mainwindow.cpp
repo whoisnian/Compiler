@@ -290,11 +290,7 @@ void MainWindow::runSyntactic()
         QMessageBox msg(this);
         msg.setIcon(QMessageBox::Critical);
         msg.setWindowTitle("语法分析遇到问题");
-        syn.scanner.curIndex = 0;
-        if(syn.program() == 0)
-            msg.setText(std::string("第"+std::to_string(syn.scanner.tokens.at(syn.errPos).lineNumber+1)+"行\n\n完整程序之外存在多余部分").c_str());
-        else
-            msg.setText(std::string("第"+std::to_string(syn.scanner.tokens.at(syn.errPos).lineNumber+1)+"行\n\n"+syn.errMessage+syn.scanner.tokens.at(syn.errPos).name).c_str());
+        msg.setText(std::string("第"+std::to_string(syn.scanner.tokens.at(syn.errPos).lineNumber+1)+"行\n\n"+syn.errMessage+syn.scanner.tokens.at(syn.errPos).name).c_str());
         msg.addButton(QMessageBox::Ok);
         msg.exec();
         showError(syn.scanner.tokens.at(syn.errPos).lineNumber+1, syn.errMessage+syn.scanner.tokens.at(syn.errPos).name);

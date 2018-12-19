@@ -37,7 +37,7 @@ struct pfinfl{
     int entry;
 };
 struct consl{
-    int data;
+    int data,loc;
 };
 struct lenl{
     int len;
@@ -64,7 +64,7 @@ struct elem{
 struct vall{
     map<int,int>var;
     map<int,int>par;
-    int size;
+    int parsize,size;
     int retaddr;
 };
 void initAll();
@@ -74,7 +74,7 @@ void addNum(int id,bool isparam=false);
 void addArray(int id,int len,bool isparam=false);
 void addCon(int id,int data);
 void alGeq(string op);
-void alPush(int id,bool isarray=false);
+void alPush(int id,int arrayidx=-1);
 void alPop();
 void exIf();
 void exIe();
