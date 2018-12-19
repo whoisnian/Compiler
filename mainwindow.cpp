@@ -243,7 +243,6 @@ void MainWindow::documentWasModified()
 {
     setWindowModified(codeEditor->document()->isModified());
     setWindowFilePath(codeEditor->curFile);
-    //qDebug() << codeEditor->curFile;
 }
 
 void MainWindow::runLexical()
@@ -284,7 +283,7 @@ void MainWindow::runSyntactic()
         table->setEditTriggers(QAbstractItemView::NoEditTriggers);
         table->setSelectionBehavior(QAbstractItemView::SelectRows);
         table->resize(900, 594);
-        table->setWindowIcon(QIcon::fromTheme("view-media-playlist"));
+        table->setWindowIcon(QIcon::fromTheme("code-context"));
         table->setWindowTitle("语法分析过程");
         table->setWordWrap(false);
         table->resizeColumnsToContents();
@@ -326,12 +325,40 @@ void MainWindow::show4Elem()
     {
         syn.scanner.curIndex = 0;
         syn.prepare_for_4elem();
-        gen4elem();
-        /*for(int i = 0; i < elems.size(); i++)
+        syn.gen4elem();
+
+        if(syn.haveErr)
         {
-            printf("%d: ", i);
-            elems[i].output();
-        }*/
+            QMessageBox msg(this);
+            msg.setIcon(QMessageBox::Critical);
+            msg.setWindowTitle("生成四元式遇到问题");
+            msg.setText(syn.errMessagePT.c_str());
+            msg.addButton(QMessageBox::Ok);
+            msg.exec();
+            return;
+        }
+
+        QTableWidget *table = new QTableWidget(syn.elems.size(), 6, nullptr);
+        for(int i = 0;i < (int)syn.elems.size();i++)
+        {
+            table->setItem(i, 0, new QTableWidgetItem(std::to_string(i).c_str()));
+            table->setItem(i, 1, new QTableWidgetItem(syn.elems.at(i).st.c_str()));
+            table->setItem(i, 2, new QTableWidgetItem(std::to_string(syn.elems.at(i).id0).c_str()));
+            table->setItem(i, 3, new QTableWidgetItem(std::to_string(syn.elems.at(i).id1).c_str()));
+            table->setItem(i, 4, new QTableWidgetItem(std::to_string(syn.elems.at(i).id2).c_str()));
+            table->setItem(i, 5, new QTableWidgetItem((syn.elems.at(i).needtag?"true":"false")));
+        }
+        table->horizontalHeader()->hide();
+        table->verticalHeader()->hide();
+        table->horizontalHeader()->setStretchLastSection(true);
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table->setSelectionBehavior(QAbstractItemView::SelectRows);
+        table->resize(400, 594);
+        table->setWindowIcon(QIcon::fromTheme("labplot-4x-zoom"));
+        table->setWindowTitle("四元式结果");
+        table->setWordWrap(false);
+        table->resizeColumnsToContents();
+        table->show();
         return;
     }
     else

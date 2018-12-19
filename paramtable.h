@@ -14,7 +14,7 @@ using namespace std;
 通过符号表可以很好的指定每个变量在内存中的位置
 to-do list：
 增加活跃信息处理
-alpush数组处理
+alpush数组处理（放弃）
 增加数据类型
 增加对无符号数的支持
 优化：除去未使用变量
@@ -71,7 +71,9 @@ struct vall{
 class ParamTable
 {
 public:
-    ParamTable(){}
+    ParamTable(){haveErr = false;errMessagePT = "";}
+bool haveErr;
+string errMessagePT;
 
 vector<synbl> synb;
 vector<pfinfl> pfinf;
@@ -98,7 +100,7 @@ void addNum(int id,bool isparam=false);
 void addArray(int id,int len,bool isparam=false);
 void addCon(int id,int data);
 void alGeq(string op);
-void alPush(int id,int arrayidx=-1);
+void alPush(int id,bool isarray=false);
 void alPop();
 void exIf();
 void exIe();
@@ -111,8 +113,8 @@ void callEnd();
 void callParam();
 void retNum();
 void retNonum();
-void gen4elem();
 void genValls();
+void gen4elem();
 void outputParam();
 void genAssembly();
 
