@@ -378,7 +378,7 @@ void MainWindow::showParamTable()
         {
             table->setItem(i, 0, new QTableWidgetItem(std::to_string(i).c_str()));
             table->setItem(i, 1, new QTableWidgetItem(std::to_string(syn.synb.at(i).name).c_str()));
-            if(syn.synb.at(i).name < syn.scanner.identifierAndIntTable.size())
+            if(syn.synb.at(i).name >= 0&&syn.synb.at(i).name < syn.scanner.identifierAndIntTable.size())
             {
                 table->item(i, 1)->setToolTip(("name: " + syn.scanner.identifierAndIntTable.at(syn.synb.at(i).name)).c_str());
                 table->item(i, 1)->setTextColor(Qt::yellow);
@@ -407,9 +407,6 @@ void MainWindow::showParamTable()
             table->setItem(i, 3, new QTableWidgetItem(std::to_string(syn.synb.at(i).addr).c_str()));
             switch(syn.synb.at(i).cat)
             {
-            case 'f':
-                //table->item(i, 3)->setToolTip()
-                break;
             case 'l':
                 table->item(i, 3)->setToolTip(("low: " + std::to_string(syn.ainf.at(syn.synb.at(i).addr).low) +
                                                "\nup : " + std::to_string(syn.ainf.at(syn.synb.at(i).addr).up)
@@ -491,9 +488,24 @@ void MainWindow::show4Elem()
         {
             table->setItem(i, 0, new QTableWidgetItem(std::to_string(i).c_str()));
             table->setItem(i, 1, new QTableWidgetItem(syn.elems.at(i).st.c_str()));
-            table->setItem(i, 2, new QTableWidgetItem(std::to_string(syn.elems.at(i).id0).c_str()));
-            table->setItem(i, 3, new QTableWidgetItem(std::to_string(syn.elems.at(i).id1).c_str()));
-            table->setItem(i, 4, new QTableWidgetItem(std::to_string(syn.elems.at(i).id2).c_str()));
+            table->setItem(i, 2, new QTableWidgetItem(std::to_string(syn.elems.at(i).id1).c_str()));
+            if(syn.elems.at(i).id1 >= 0&&syn.elems.at(i).id1 < syn.scanner.identifierAndIntTable.size())
+            {
+                table->item(i, 2)->setToolTip(("name: " + syn.scanner.identifierAndIntTable.at(syn.elems.at(i).id1)).c_str());
+                table->item(i, 2)->setTextColor(Qt::yellow);
+            }
+            table->setItem(i, 3, new QTableWidgetItem(std::to_string(syn.elems.at(i).id2).c_str()));
+            if(syn.elems.at(i).id2 >= 0&&syn.elems.at(i).id2 < syn.scanner.identifierAndIntTable.size())
+            {
+                table->item(i, 3)->setToolTip(("name: " + syn.scanner.identifierAndIntTable.at(syn.elems.at(i).id2)).c_str());
+                table->item(i, 3)->setTextColor(Qt::yellow);
+            }
+            table->setItem(i, 4, new QTableWidgetItem(std::to_string(syn.elems.at(i).id0).c_str()));
+            if(syn.elems.at(i).id0 >= 0&&syn.elems.at(i).id0 < syn.scanner.identifierAndIntTable.size())
+            {
+                table->item(i, 4)->setToolTip(("name: " + syn.scanner.identifierAndIntTable.at(syn.elems.at(i).id0)).c_str());
+                table->item(i, 4)->setTextColor(Qt::yellow);
+            }
             //table->setItem(i, 5, new QTableWidgetItem((syn.elems.at(i).needtag?"true":"false")));
         }
         table->horizontalHeader()->hide();
@@ -525,7 +537,69 @@ void MainWindow::show4Elem()
 
 void MainWindow::runCompile()
 {
+    Scan scanner;
+    scanner.initFrom(codeEditor->document()->toPlainText().toStdString());
+    if(scanner.errPos != -1)
+    {
+        QMessageBox msg(this);
+        msg.setIcon(QMessageBox::Critical);
+        msg.setWindowTitle("词法分析遇到问题");
+        if(scanner.errPos == 0)
+            msg.setText(std::string("错误原因\n\n"+scanner.errMessage).c_str());
+        else
+            msg.setText(std::string("第"+std::to_string(scanner.errLine+1)+"行\n\n"+scanner.errMessage).c_str());
+        msg.addButton(QMessageBox::Ok);
+        msg.exec();
+        return;
+    }
+    Syntax syn(scanner);
+    if(syn.program() == 0&&syn.scanner.next().isEOF())
+    {
+        try
+        {
+            syn.scanner.curIndex = 0;
+            syn.prepare_for_4elem();
+            syn.gen4elem();
+            syn.genValls();
+            syn.genAssembly();
+        }catch(...){}
 
+        if(syn.haveErr)
+        {
+            QMessageBox msg(this);
+            msg.setIcon(QMessageBox::Critical);
+            msg.setWindowTitle("生成四元式遇到问题");
+            msg.setText(syn.errMessagePT.c_str());
+            msg.addButton(QMessageBox::Ok);
+            msg.exec();
+            return;
+        }
+
+        QString srcCode = "";
+        for(int i = 0;i < syn.assemblyRes.size();i++)
+        {
+            srcCode.append(syn.assemblyRes.at(i).c_str());
+            srcCode.append("\n");
+        }
+        QPlainTextEdit *showEditor = new CodeEditor(nullptr);
+        showEditor->setPlainText(srcCode);
+        showEditor->setWindowTitle("汇编代码");
+        showEditor->setWindowIcon(QIcon::fromTheme("format-text-code"));
+        showEditor->resize(400, 594);
+        showEditor->show();
+        return;
+    }
+    else
+    {
+        QMessageBox msg(this);
+        msg.setIcon(QMessageBox::Critical);
+        msg.setWindowTitle("语法分析遇到问题");
+        msg.setText(std::string("第"+std::to_string(syn.scanner.tokens.at(syn.errPos).lineNumber+1)+"行\n\n"+syn.errMessage+syn.scanner.tokens.at(syn.errPos).name).c_str());
+        msg.addButton(QMessageBox::Ok);
+        msg.exec();
+        showError(syn.scanner.tokens.at(syn.errPos).lineNumber+1, syn.errMessage+syn.scanner.tokens.at(syn.errPos).name);
+        return;
+    }
 }
 
 void MainWindow::runRun()
@@ -552,16 +626,85 @@ void MainWindow::runRun()
     }
     else
     {
-        QProcess *runDosbox = new QProcess(this);
-        QString dosDir = "/home/nian/dos/";
-        QString fileBaseName = "test";
-        arguments.clear();
-        arguments << "-c" << "mount C: " + dosDir
-                  << "-c" << "path %path%;C:\\tools\\"
-                  << "-c" << "C:"
-                  << "-c" << "masm " + fileBaseName + ".asm," + fileBaseName + ".obj;"
-                  << "-c" << "link " + fileBaseName + ".obj," + fileBaseName + ".exe;"
-                  << "-c" << fileBaseName + ".exe";
-        runDosbox->start(command, arguments);
+        Scan scanner;
+        scanner.initFrom(codeEditor->document()->toPlainText().toStdString());
+        if(scanner.errPos != -1)
+        {
+            QMessageBox msg(this);
+            msg.setIcon(QMessageBox::Critical);
+            msg.setWindowTitle("词法分析遇到问题");
+            if(scanner.errPos == 0)
+                msg.setText(std::string("错误原因\n\n"+scanner.errMessage).c_str());
+            else
+                msg.setText(std::string("第"+std::to_string(scanner.errLine+1)+"行\n\n"+scanner.errMessage).c_str());
+            msg.addButton(QMessageBox::Ok);
+            msg.exec();
+            return;
+        }
+        Syntax syn(scanner);
+        if(syn.program() == 0&&syn.scanner.next().isEOF())
+        {
+            try
+            {
+                syn.scanner.curIndex = 0;
+                syn.prepare_for_4elem();
+                syn.gen4elem();
+                syn.genValls();
+                syn.genAssembly();
+            }catch(...){}
+
+            if(syn.haveErr)
+            {
+                QMessageBox msg(this);
+                msg.setIcon(QMessageBox::Critical);
+                msg.setWindowTitle("生成四元式遇到问题");
+                msg.setText(syn.errMessagePT.c_str());
+                msg.addButton(QMessageBox::Ok);
+                msg.exec();
+                return;
+            }
+
+            QString srcCode = "";
+            for(int i = 0;i < syn.assemblyRes.size();i++)
+            {
+                srcCode.append(syn.assemblyRes.at(i).c_str());
+                srcCode.append("\n");
+            }
+
+            QString dosDir = "/home/nian/dos/";
+            QString fileBaseName = "output";
+
+            QFile file(dosDir + fileBaseName + ".asm");
+            if(!file.open(QFile::WriteOnly|QFile::Text))
+            {
+                this->statusBar()->showMessage("写入汇编失败", 2000);
+                return;
+            }
+
+            QTextStream out(&file);
+            out << srcCode;
+
+            QProcess *runDosbox = new QProcess(this);
+            arguments.clear();
+            arguments << "-c" << "mount C: " + dosDir
+                      << "-c" << "path %path%;C:\\tools\\"
+                      << "-c" << "C:"
+                      << "-c" << "masm " + fileBaseName + ".asm," + fileBaseName + ".obj;"
+                      << "-c" << "link " + fileBaseName + ".obj," + fileBaseName + ".exe;"
+                      << "-c" << fileBaseName + ".exe";
+            runDosbox->start(command, arguments);
+            return;
+        }
+        else
+        {
+            QMessageBox msg(this);
+            msg.setIcon(QMessageBox::Critical);
+            msg.setWindowTitle("语法分析遇到问题");
+            msg.setText(std::string("第"+std::to_string(syn.scanner.tokens.at(syn.errPos).lineNumber+1)+"行\n\n"+syn.errMessage+syn.scanner.tokens.at(syn.errPos).name).c_str());
+            msg.addButton(QMessageBox::Ok);
+            msg.exec();
+            showError(syn.scanner.tokens.at(syn.errPos).lineNumber+1, syn.errMessage+syn.scanner.tokens.at(syn.errPos).name);
+            return;
+        }
     }
 }

@@ -11,6 +11,7 @@
 #include <QToolBar>
 #include <QProcess>
 #include <QHeaderView>
+#include <QTextStream>
 #include <QTableWidget>
 #include "codeeditor.h"
 #include "codehighlighter.h"
