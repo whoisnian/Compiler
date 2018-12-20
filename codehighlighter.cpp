@@ -15,6 +15,16 @@ CodeHighlighter::CodeHighlighter(QTextDocument *parent) : QSyntaxHighlighter (pa
     highlighterFormat[TOKEN_TYPE_STR].setForeground(QColor("#d69545"));
     highlighterFormat[TOKEN_TYPE_COMMENT].setForeground(QColor("#808080"));
 
+    tokenTypeName[TOKEN_TYPE_UNKNOWN]       = "未知类型";
+    tokenTypeName[TOKEN_TYPE_KEYWORD]       = "关键字";
+    tokenTypeName[TOKEN_TYPE_IDENTIFIER]    = "标识符";
+    tokenTypeName[TOKEN_TYPE_DELIMITER]     = "界符";
+    tokenTypeName[TOKEN_TYPE_INT]           = "整型";
+    tokenTypeName[TOKEN_TYPE_FLOAT]         = "浮点";
+    tokenTypeName[TOKEN_TYPE_CHAR]          = "字符";
+    tokenTypeName[TOKEN_TYPE_STR]           = "字符串";
+    tokenTypeName[TOKEN_TYPE_COMMENT]       = "注释";
+
     scanner = new Scan;
     scanner->initFrom(this->document()->toPlainText().toStdString());
     if(scanner->errPos != -1)
@@ -49,7 +59,9 @@ void CodeHighlighter::highlightBlock(const QString &text)
 {
     if(!enable)
     {
-        setFormat(0, text.size(), highlighterFormat[TOKEN_TYPE_UNKNOWN]);
+        QTextCharFormat tempFormat;
+        tempFormat.setForeground(QColor("#ffffff"));
+        setFormat(0, text.size(), tempFormat);
         return;
     }
     for(int i = 0;i < (int)scanner->tokens.size()&&scanner->tokens.at(i).lineNumber <= currentBlock().blockNumber();i++)
@@ -83,6 +95,13 @@ void CodeHighlighter::highlightBlock(const QString &text)
             }
         }
 
-        setFormat(stpos, len, highlighterFormat[scanner->tokens.at(i).type]);
+        QTextCharFormat tempFormat = highlighterFormat[scanner->tokens.at(i).type];
+        if(scanner->tokens.at(i).type == TOKEN_TYPE_COMMENT)
+            tempFormat.setToolTip(QString(tokenTypeName[scanner->tokens.at(i).type].c_str()));
+        else if(scanner->tokens.at(i).isIdentifier()||scanner->tokens.at(i).isInt())
+            tempFormat.setToolTip(QString(("<b>" + scanner->tokens.at(i).name + "</b><br/>编号：" + std::to_string(scanner->tokens.at(i).identifierAndIntPos) + "<br/>类型：" + tokenTypeName[scanner->tokens.at(i).type]).c_str()));
+        else
+            tempFormat.setToolTip(QString(("<b>" + scanner->tokens.at(i).name + "</b><br/>编号：" + std::to_string(scanner->tokens.at(i).pos) + "<br/>类型：" + tokenTypeName[scanner->tokens.at(i).type]).c_str()));
+        setFormat(stpos, len, tempFormat);
     }
 }

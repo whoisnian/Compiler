@@ -27,6 +27,7 @@ private:
     Scan *scanner;
 
     QTextCharFormat highlighterFormat[10];
+    std::string tokenTypeName[10];
 };
 
 #endif // CODEHIGHLIGHTER_H

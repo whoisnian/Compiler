@@ -123,6 +123,30 @@ void CodeEditor::dragEnterEvent(QDragEnterEvent *event)
     event->accept();
 }
 
+bool CodeEditor::event(QEvent *event)
+{
+    if(event->type() == QEvent::ToolTip)
+    {
+        QHelpEvent* helpEvent = static_cast<QHelpEvent*>(event);
+        QTextCursor cursor = cursorForPosition(QPoint(helpEvent->x() - lineNumberAreaWidth(), helpEvent->y()));
+        QString tip = "";
+        foreach(QTextLayout::FormatRange r, cursor.block().layout()->formats())
+        {
+            if(cursor.positionInBlock() >= r.start&&cursor.positionInBlock() < r.start + r.length)
+            {
+                tip = r.format.toolTip();
+                break;
+            }
+        }
+        if(tip.size() > 0)
+            QToolTip::showText(helpEvent->globalPos(), tip);
+        else
+            QToolTip::hideText();
+        return true;
+    }
+    return QPlainTextEdit::event(event);
+}
+
 void CodeEditor::updateLineNumberAreaWidth(int)
 {
     this->setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);

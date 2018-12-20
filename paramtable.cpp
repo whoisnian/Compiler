@@ -313,6 +313,7 @@ void ParamTable::callBegin(int id)
         cout << "error: '"
              << "' was not declared in this scope" << endl;
 #endif
+        throw "callError";
         return;
     }
     calls.push(id);

@@ -103,6 +103,7 @@ public:
 
 public slots:
     void about();
+    void showSynText();
     void newFile();
     void openFile();
     void saveFile();
@@ -111,6 +112,7 @@ public slots:
     void runLexical();
     void runSyntactic();
     void show4Elem();
+    void showParamTable();
     void runCompile();
     void runRun();
 

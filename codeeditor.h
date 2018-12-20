@@ -7,6 +7,7 @@
 #include <QTextBlock>
 #include <QDragEnterEvent>
 #include <QPlainTextEdit>
+#include <QToolTip>
 
 class CodeEditor;
 class LineNumberArea;
@@ -38,6 +39,7 @@ public:
 protected:
     void resizeEvent(QResizeEvent *event);
     void dragEnterEvent(QDragEnterEvent *event);
+    bool event(QEvent *event);
 
 public slots:
     void updateLineNumberAreaWidth(int);
