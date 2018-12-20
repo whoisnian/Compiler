@@ -622,57 +622,71 @@ void ParamTable::toax(int k, int id, int diffid) //输出到从内存提取到ax
 {
     if (table_cons.count(id)) //为常数
     {
-        cout << "MOV   AX," << table_cons[id] << endl;
+        //cout << "MOV   AX," << table_cons[id] << endl;
+        assemblyRes.push_back("MOV   AX," + to_string(table_cons[id]));
     }
     else if (basicValls[k].var.count(id)) //考虑是局部变量还是全局变量
     {
         id = basicValls[k].var[id];
         if (diffid == -1)
-            cout << "MOV   AX,[BP-" << id + 2 << "]" << endl;
+            //cout << "MOV   AX,[BP-" << id + 2 << "]" << endl;
+            assemblyRes.push_back("MOV   AX,[BP-" + to_string(id+2) + "]");
         else //为数组，考虑偏移量是否是全局变量
         {
             if (table_cons.count(diffid))
             {
-                cout << "MOV   SI," << table_cons[diffid] << endl;
+                //cout << "MOV   SI," << table_cons[diffid] << endl;
+                assemblyRes.push_back("MOV   SI," + to_string(table_cons[diffid]));
             }
             else if (basicValls[0].var.count(diffid))
             {
                 diffid = basicValls[0].var[diffid];
-                cout << "MOV   SI,[BX+" << diffid << "]" << endl;
+                //cout << "MOV   SI,[BX+" << diffid << "]" << endl;
+                assemblyRes.push_back("MOV   SI,[BX+" + to_string(diffid) + "]");
             }
             else
             {
                 diffid = basicValls[k].var[diffid];
-                cout << "MOV   SI,[BP-" << diffid + 2 << "]" << endl;
+                //cout << "MOV   SI,[BP-" << diffid + 2 << "]" << endl;
+                assemblyRes.push_back("MOV   SI,[BP-" + to_string(diffid+2) + "]");
             }
-            cout << "SHL   SI,1" << endl;
-            cout << "NEG   SI" << endl;
-            cout << "MOV   AX,[BP+SI-" << id + 2 << "]" << endl;
+            //cout << "SHL   SI,1" << endl;
+            //cout << "NEG   SI" << endl;
+            //cout << "MOV   AX,[BP+SI-" << id + 2 << "]" << endl;
+            assemblyRes.push_back("SHL   SI,1");
+            assemblyRes.push_back("NEG   SI");
+            assemblyRes.push_back("MOV   AX,[BP+SI-" + to_string(id+2) + "]");
         }
     }
     else
     {
         id = basicValls[0].var[id];
         if (diffid == -1)
-            cout << "MOV   AX,[BX+" << id << "]" << endl;
+            //cout << "MOV   AX,[BX+" << id << "]" << endl;
+            assemblyRes.push_back("MOV   AX,[BX+" + to_string(id) + "]");
         else //为数组，考虑偏移量是否是全局变量
         {
             if (table_cons.count(diffid))
             {
-                cout << "MOV   DI," << table_cons[diffid] << endl;
+                //cout << "MOV   DI," << table_cons[diffid] << endl;
+                assemblyRes.push_back("MOV   DI," + to_string(table_cons[diffid]));
             }
             else if (basicValls[0].var.count(diffid))
             {
                 diffid = basicValls[0].var[diffid];
-                cout << "MOV   DI,[BX+" << diffid << "]" << endl;
-    }
-    else
-    {
-                diffid = basicValls[k].var[diffid];
-                cout << "MOV   DI,[BP-" << diffid + 2 << "]" << endl;
+                //cout << "MOV   DI,[BX+" << diffid << "]" << endl;
+                assemblyRes.push_back("MOV   DI,[BX+" + to_string(diffid) + "]");
             }
-            cout << "SHL   DI,1" << endl;
-            cout << "MOV   AX,[BX+DI+" << id << "]" << endl;
+            else
+            {
+                diffid = basicValls[k].var[diffid];
+                //cout << "MOV   DI,[BP-" << diffid + 2 << "]" << endl;
+                assemblyRes.push_back("MOV   DI,[BP-" + to_string(diffid+2) + "]");
+            }
+            //cout << "SHL   DI,1" << endl;
+            //cout << "MOV   AX,[BX+DI+" << id << "]" << endl;
+            assemblyRes.push_back("SHL   DI,1");
+            assemblyRes.push_back("MOV   AX,[BX+DI+" + to_string(id) + "]");
         }
     }
 }
@@ -680,57 +694,71 @@ void ParamTable::tocx(int k, int id, int diffid) //输出到从内存提取到ax
 {
     if (table_cons.count(id))
     {
-        cout << "MOV   CX," << table_cons[id] << endl;
+        //cout << "MOV   CX," << table_cons[id] << endl;
+        assemblyRes.push_back("MOV   CX," + to_string(table_cons[id]));
     }
     else if (basicValls[k].var.count(id)) //考虑是局部变量还是全局变量
     {
         id = basicValls[k].var[id];
         if (diffid == -1)
-            cout << "MOV   CX,[BP-" << id + 2 << "]" << endl;
+            //cout << "MOV   CX,[BP-" << id + 2 << "]" << endl;
+            assemblyRes.push_back("MOV   CX,[BP-" + to_string(id+2) + "]");
         else //为数组，考虑偏移量是否是全局变量
         {
             if (table_cons.count(diffid))
             {
-                cout << "MOV   SI," << table_cons[diffid] << endl;
+                //cout << "MOV   SI," << table_cons[diffid] << endl;
+                assemblyRes.push_back("MOV   SI," + to_string(table_cons[diffid]));
             }
             else if (basicValls[0].var.count(diffid))
             {
                 diffid = basicValls[0].var[diffid];
-                cout << "MOV   SI,[BX+" << diffid << "]" << endl;
+                //cout << "MOV   SI,[BX+" << diffid << "]" << endl;
+                assemblyRes.push_back("MOV   SI,[BX+" + to_string(diffid) + "]");
             }
             else
             {
                 diffid = basicValls[k].var[diffid];
-                cout << "MOV   SI,[BP-" << diffid + 2 << "]" << endl;
+                //cout << "MOV   SI,[BP-" << diffid + 2 << "]" << endl;
+                assemblyRes.push_back("MOV   SI,[BP-" + to_string(diffid+2) + "]");
             }
-            cout << "SHL   SI,1" << endl;
-            cout << "NEG   SI" << endl;
-            cout << "MOV   CX,[BP+SI-" << id + 2 << "]" << endl;
+            //cout << "SHL   SI,1" << endl;
+            //cout << "NEG   SI" << endl;
+            //cout << "MOV   CX,[BP+SI-" << id + 2 << "]" << endl;
+            assemblyRes.push_back("SHL   SI,1");
+            assemblyRes.push_back("NEG   SI");
+            assemblyRes.push_back("MOV   CX,[BP+SI-" + to_string(id+2) + "]");
         }
     }
     else
     {
         id = basicValls[0].var[id];
         if (diffid == -1)
-            cout << "MOV   CX,[BX+" << id << "]" << endl;
+            //cout << "MOV   CX,[BX+" << id << "]" << endl;
+            assemblyRes.push_back("MOV   CX,[BX+" + to_string(id) + "]");
         else //为数组，考虑偏移量是否是全局变量
         {
             if (table_cons.count(diffid))
             {
-                cout << "MOV   DI," << table_cons[diffid] << endl;
+                //cout << "MOV   DI," << table_cons[diffid] << endl;
+                assemblyRes.push_back("MOV   DI," + to_string(table_cons[diffid]));
             }
             else if (basicValls[0].var.count(diffid))
             {
                 diffid = basicValls[0].var[diffid];
-                cout << "MOV   DI,[BX+" << diffid << "]" << endl;
-    }
-    else
-    {
-                diffid = basicValls[k].var[diffid];
-                cout << "MOV   DI,[BP-" << diffid + 2 << "]" << endl;
+                //cout << "MOV   DI,[BX+" << diffid << "]" << endl;
+                assemblyRes.push_back("MOV   DI,[BX+" + to_string(diffid) + "]");
             }
-            cout << "SHL   DI,1" << endl;
-            cout << "MOV   CX,[BX+DI+" << id << "]" << endl;
+            else
+            {
+                diffid = basicValls[k].var[diffid];
+                //cout << "MOV   DI,[BP-" << diffid + 2 << "]" << endl;
+                assemblyRes.push_back("MOV   DI,[BP-" + to_string(diffid+2) + "]");
+            }
+            //cout << "SHL   DI,1" << endl;
+            //cout << "MOV   CX,[BX+DI+" << id << "]" << endl;
+            assemblyRes.push_back("SHL   DI,1");
+            assemblyRes.push_back("MOV   CX,[BX+DI+" + to_string(id) + "]");
         }
     }
 }
@@ -738,57 +766,71 @@ void ParamTable::axto(int k, int id, int diffid) //输出到从ax提取到内存
 {
     if (table_cons.count(id))
     {
-        cout << "MOV   CX," << table_cons[id] << endl;
+        //cout << "MOV   CX," << table_cons[id] << endl;
+        assemblyRes.push_back("MOV   CX," + to_string(table_cons[id]));
     }
     else if (basicValls[k].var.count(id)) //考虑是局部变量还是全局变量
     {
         id = basicValls[k].var[id];
         if (diffid == -1)
-            cout << "MOV   [BP-" << id + 2 << "],AX" << endl;
+            //cout << "MOV   [BP-" << id + 2 << "],AX" << endl;
+            assemblyRes.push_back("MOV   [BP-" + to_string(id+2) + "],AX");
         else //为数组，考虑偏移量是否是全局变量
         {
             if (table_cons.count(diffid))
             {
-                cout << "MOV   SI," << table_cons[diffid] << endl;
-    }
+                //cout << "MOV   SI," << table_cons[diffid] << endl;
+                assemblyRes.push_back("MOV   SI," + to_string(table_cons[diffid]));
+            }
             else if (basicValls[0].var.count(diffid))
             {
                 diffid = basicValls[0].var[diffid];
-                cout << "MOV   SI,[BX+" << diffid << "]" << endl;
-}
-            else
-{
-                diffid = basicValls[k].var[diffid];
-                cout << "MOV   SI,[BP-" << diffid + 2 << "]" << endl;
+                //cout << "MOV   SI,[BX+" << diffid << "]" << endl;
+                assemblyRes.push_back("MOV   SI,[BX+" + to_string(diffid) + "]");
             }
-            cout << "SHL   SI,1" << endl;
-            cout << "NEG   SI" << endl;
-            cout << "MOV   [BP+SI-" << id + 2 << "],AX" << endl;
+            else
+            {
+                diffid = basicValls[k].var[diffid];
+                //cout << "MOV   SI,[BP-" << diffid + 2 << "]" << endl;
+                assemblyRes.push_back("MOV   SI,[BP-" + to_string(diffid+2) + "]");
+            }
+            //cout << "SHL   SI,1" << endl;
+            //cout << "NEG   SI" << endl;
+            //cout << "MOV   [BP+SI-" << id + 2 << "],AX" << endl;
+            assemblyRes.push_back("SHL   SI,1");
+            assemblyRes.push_back("NEG   SI");
+            assemblyRes.push_back("MOV   [BP+SI-" + to_string(id+2) + "],AX");
         }
     }
     else
     {
         id = basicValls[0].var[id];
         if (diffid == -1)
-            cout << "MOV   [BX+" << id << "],AX" << endl;
+            //cout << "MOV   [BX+" << id << "],AX" << endl;
+            assemblyRes.push_back("MOV   [BX+" + to_string(id) + "],AX");
         else //为数组，考虑偏移量是否是全局变量
         {
             if (table_cons.count(diffid))
             {
-                cout << "MOV   DI," << table_cons[diffid] << endl;
+                //cout << "MOV   DI," << table_cons[diffid] << endl;
+                assemblyRes.push_back("MOV   DI," + to_string(table_cons[diffid]));
             }
             else if (basicValls[0].var.count(diffid))
             {
                 diffid = basicValls[0].var[diffid];
-                cout << "MOV   DI,[BX+" << diffid << "]" << endl;
-    }
-    else
-    {
-                diffid = basicValls[k].var[diffid];
-                cout << "MOV   DI,[BP-" << diffid + 2 << "]" << endl;
+                //cout << "MOV   DI,[BX+" << diffid << "]" << endl;
+                assemblyRes.push_back("MOV   DI,[BX+" + to_string(diffid) + "]");
             }
-            cout << "SHL   DI,1" << endl;
-            cout << "MOV   [BX+DI+" << id << "],AX" << endl;
+            else
+            {
+                diffid = basicValls[k].var[diffid];
+                //cout << "MOV   DI,[BP-" << diffid + 2 << "]" << endl;
+                assemblyRes.push_back("MOV   DI,[BP-" + to_string(diffid+2) + "]");
+            }
+            //cout << "SHL   DI,1" << endl;
+            //cout << "MOV   [BX+DI+" << id << "],AX" << endl;
+            assemblyRes.push_back("SHL   DI,1");
+            assemblyRes.push_back("MOV   [BX+DI+" + to_string(id) + "],AX");
         }
     }
 }
@@ -796,31 +838,38 @@ void ParamTable::jgjp(int k, string st, int tg) //符合条件则跳转
 {
     if (st == "jmp")
     {
-        cout << "JMP   F" << k << "T" << tg << endl;
+        //cout << "JMP   F" << k << "T" << tg << endl;
+        assemblyRes.push_back("JMP   F" + to_string(k) + "T" + to_string(tg));
     }
     else if (st == "==")
     {
-        cout << "JE    F" << k << "T" << tg << endl;
+        //cout << "JE    F" << k << "T" << tg << endl;
+        assemblyRes.push_back("JE    F" + to_string(k) + "T" + to_string(tg));
     }
     else if (st == "!=")
     {
-        cout << "JNE    F" << k << "T" << tg << endl;
+        //cout << "JNE    F" << k << "T" << tg << endl;
+        assemblyRes.push_back("JNE    F" + to_string(k) + "T" + to_string(tg));
     }
     else if (st == ">")
     {
-        cout << "JA    F" << k << "T" << tg << endl;
+        //cout << "JA    F" << k << "T" << tg << endl;
+        assemblyRes.push_back("JA    F" + to_string(k) + "T" + to_string(tg));
     }
     else if (st == "<=")
     {
-        cout << "JNA   F" << k << "T" << tg << endl;
+        //cout << "JNA   F" << k << "T" << tg << endl;
+        assemblyRes.push_back("JNA   F" + to_string(k) + "T" + to_string(tg));
     }
     else if (st == "<")
     {
-        cout << "JB    F" << k << "T" << tg << endl;
+        //cout << "JB    F" << k << "T" << tg << endl;
+        assemblyRes.push_back("JB    F" + to_string(k) + "T" + to_string(tg));
     }
     else if (st == ">=")
     {
-        cout << "JNB   F" << k << "T" << tg << endl;
+        //cout << "JNB   F" << k << "T" << tg << endl;
+        assemblyRes.push_back("JNB   F" + to_string(k) + "T" + to_string(tg));
     }
 }
 void ParamTable::genAssembly()
@@ -828,40 +877,67 @@ void ParamTable::genAssembly()
     int i, j, k, id0, id1, id2, tmpjmp = -1, tmp, tmpsynb, diffid1 = -1, diffid2 = -1;
     string tmpst;
     elem tmpelem("", -1, -1, -1);
-    cout << "SSEG  SEGMENT" << endl;
-    cout << "SKTOP DW 200 DUP(?)" << endl;
-    cout << "SSEG  ENDS" << endl;
-    cout << "DSEG  SEGMENT" << endl;
-    cout << "MAINV DW " << basicValls[0].size << " DUP(?)" << endl;
-    cout << "DSEG  ENDS" << endl;
-    cout << "CSEG  SEGMENT" << endl;
-    cout << "      ASSUME  SS:SSEG,CS:CSEG,DS:DSEG" << endl;
+    //cout << "SSEG  SEGMENT" << endl;
+    //cout << "SKTOP DW 200 DUP(?)" << endl;
+    //cout << "SSEG  ENDS" << endl;
+    //cout << "DSEG  SEGMENT" << endl;
+    //cout << "MAINV DW " << basicValls[0].size << " DUP(?)" << endl;
+    //cout << "DSEG  ENDS" << endl;
+    //cout << "CSEG  SEGMENT" << endl;
+    //cout << "      ASSUME  SS:SSEG,CS:CSEG,DS:DSEG" << endl;
+    assemblyRes.push_back("SSEG  SEGMENT");
+    assemblyRes.push_back("SKTOP DW 200 DUP(?)");
+    assemblyRes.push_back("SSEG  ENDS");
+    assemblyRes.push_back("DSEG  SEGMENT");
+    assemblyRes.push_back("MAINV DW " + to_string(basicValls[0].size) + " DUP(?)");
+    assemblyRes.push_back("DSEG  ENDS");
+    assemblyRes.push_back("CSEG  SEGMENT");
+    assemblyRes.push_back("      ASSUME  SS:SSEG,CS:CSEG,DS:DSEG");
     for (k = 1; k < pfinf.size(); k++)
     {
         if (k != pfinf.size() - 1)
         {
-            cout << "FUN" << k << "  PROC NEAR" << endl;
-            cout << "MOV   CX," << (basicValls[k].size - basicValls[k].parsize - 2) / 2 << endl;
-            cout << "F" << k << "IN: NOP" << endl;
-            cout << "PUSH  AX" << endl; //存临时变量和参数
-            cout << "LOOP  F" << k << "IN" << endl;
-            cout << "MOV   BP,SI" << endl;
-            cout << "PUSH  BP" << endl;
+            //cout << "FUN" << k << "  PROC NEAR" << endl;
+            //cout << "MOV   CX," << (basicValls[k].size - basicValls[k].parsize - 2) / 2 << endl;
+            //cout << "F" << k << "IN: NOP" << endl;
+            //cout << "PUSH  AX" << endl; //存临时变量和参数
+            //cout << "LOOP  F" << k << "IN" << endl;
+            //cout << "MOV   BP,SI" << endl;
+            //cout << "PUSH  BP" << endl;
+            assemblyRes.push_back("FUN" + to_string(k) + "  PROC NEAR");
+            assemblyRes.push_back("MOV   CX," + to_string((basicValls[k].size-basicValls[k].parsize-2)/2));
+            assemblyRes.push_back("F" + to_string(k) + "IN: NOP");
+            assemblyRes.push_back("PUSH  AX");
+            assemblyRes.push_back("LOOP  F" + to_string(k) + "IN");
+            assemblyRes.push_back("MOV   BP,SI");
+            assemblyRes.push_back("PUSH  BP");
         }
         else
         {
-            cout << "START:MOV   AX,DSEG" << endl;
-            cout << "MOV   DS,AX" << endl;
-            cout << "MOV   AX,SSEG" << endl;
-            cout << "MOV   SS,AX" << endl;
-            cout << "MOV   BP,SP" << endl;           //BP：当前函数栈顶
-            cout << "MOV   BX,OFFSET MAINV" << endl; //DI：全局变量
-            cout << "MOV   AX,0" << endl;
-            cout << "MOV   CX," << basicValls[k].size / 2 << endl;
-            cout << "F" << k << "IN: NOP" << endl;
-            cout << "PUSH  AX" << endl; //存临时变量和参数
-            cout << "LOOP  F" << k << "IN" << endl;
-            cout << "PUSH  BP" << endl; //存bp
+            //cout << "START:MOV   AX,DSEG" << endl;
+            //cout << "MOV   DS,AX" << endl;
+            //cout << "MOV   AX,SSEG" << endl;
+            //cout << "MOV   SS,AX" << endl;
+            //cout << "MOV   BP,SP" << endl;           //BP：当前函数栈顶
+            //cout << "MOV   BX,OFFSET MAINV" << endl; //DI：全局变量
+            //cout << "MOV   AX,0" << endl;
+            //cout << "MOV   CX," << basicValls[k].size / 2 << endl;
+            //cout << "F" << k << "IN: NOP" << endl;
+            //cout << "PUSH  AX" << endl; //存临时变量和参数
+            //cout << "LOOP  F" << k << "IN" << endl;
+            //cout << "PUSH  BP" << endl; //存bp
+            assemblyRes.push_back("START:MOV   AX,DSEG");
+            assemblyRes.push_back("MOV   DS,AX");
+            assemblyRes.push_back("MOV   AX,SSEG");
+            assemblyRes.push_back("MOV   SS,AX");
+            assemblyRes.push_back("MOV   BP,SP");
+            assemblyRes.push_back("MOV   BX,OFFSET MAINV");
+            assemblyRes.push_back("MOV   AX,0");
+            assemblyRes.push_back("MOV   CX," + to_string(basicValls[k].size/2));
+            assemblyRes.push_back("F" + to_string(k) + "IN: NOP");
+            assemblyRes.push_back("PUSH  AX");
+            assemblyRes.push_back("LOOP  F" + to_string(k) + "IN");
+            assemblyRes.push_back("PUSH  BP");
         }
         /*for (i = 0; i < pfinf[k].param.size(); i++)
             if (synb[pfinf[k].param[i]].cat == 'c')
@@ -877,7 +953,8 @@ void ParamTable::genAssembly()
             tmpelem.output();
 #endif
             if (tmpelem.needtag)
-                cout << "F" << k << "T" << pfinf[k].elems[i] << ": NOP" << endl;
+                //cout << "F" << k << "T" << pfinf[k].elems[i] << ": NOP" << endl;
+                assemblyRes.push_back("F" + to_string(k) + "T" + to_string(pfinf[k].elems[i]) + ": NOP");
             if (tmpelem.st == "=")
             {
 
@@ -894,25 +971,32 @@ void ParamTable::genAssembly()
                 diffid2 = -1;
                 if (tmpelem.st == "+")
                 {
-                    cout << "ADD   AX,CX" << endl;
+                    //cout << "ADD   AX,CX" << endl;
+                    assemblyRes.push_back("ADD   AX,CX");
                 }
                 else if (tmpelem.st == "-")
                 {
-                    cout << "SUB   AX,CX" << endl;
+                    //cout << "SUB   AX,CX" << endl;
+                    assemblyRes.push_back("SUB   AX,CX");
                 }
                 else if (tmpelem.st == "*")
                 {
-                    cout << "MUL   CX" << endl;
+                    //cout << "MUL   CX" << endl;
+                    assemblyRes.push_back("MUL   CX");
                 }
                 else if (tmpelem.st == "/")
                 {
-                    cout << "MOV   DX,0" << endl;
-                    cout << "DIV   CX" << endl;
+                    //cout << "MOV   DX,0" << endl;
+                    //cout << "DIV   CX" << endl;
+                    assemblyRes.push_back("MOV   DX,0");
+                    assemblyRes.push_back("DIV   CX");
                 }
                 else if (tmpelem.st == "%")
                 {
-                    cout << "DIV   CX" << endl;
-                    cout << "MOV   AX,DX" << endl;
+                    //cout << "DIV   CX" << endl;
+                    //cout << "MOV   AX,DX" << endl;
+                    assemblyRes.push_back("DIV   CX");
+                    assemblyRes.push_back("MOV   AX,DX");
                 }
                 axto(k, tmpelem.id0);
             }
@@ -922,17 +1006,22 @@ void ParamTable::genAssembly()
                 diffid1 = -1;
                 tocx(k, tmpelem.id2, diffid2);
                 diffid2 = -1;
-                cout << "CMP   AX,CX" << endl;
-                cout << "MOV   AX,1" << endl;
+                //cout << "CMP   AX,CX" << endl;
+                //cout << "MOV   AX,1" << endl;
+                assemblyRes.push_back("CMP   AX,CX");
+                assemblyRes.push_back("MOV   AX,1");
                 jgjp(0, tmpelem.st, ++tmpjmp);
-                cout << "MOV   AX,0" << endl;
-                cout << "F0T" << tmpjmp << ": NOP" << endl;
+                //cout << "MOV   AX,0" << endl;
+                //cout << "F0T" << tmpjmp << ": NOP" << endl;
+                assemblyRes.push_back("MOV   AX,0");
+                assemblyRes.push_back("F0T" + to_string(tmpjmp) + ": NOP");
                 axto(k, tmpelem.id0);
             }
             else if (tmpelem.st == "if")
             {
                 toax(k, tmpelem.id1);
-                cout << "CMP  AX,0" << endl;
+                //cout << "CMP   AX,0" << endl;
+                assemblyRes.push_back("CMP   AX,0");
                 jgjp(k, "==", tmpelem.id0);
             }
             else if (tmpelem.st == "ie")
@@ -948,7 +1037,8 @@ void ParamTable::genAssembly()
             else if (tmpelem.st == "do")
             {
                 toax(k, tmpelem.id1);
-                cout << "CMP  AX,0" << endl;
+                //cout << "CMP   AX,0" << endl;
+                assemblyRes.push_back("CMP   AX,0");
                 jgjp(k, "==", tmpelem.id0);
             }
             else if (tmpelem.st == "we")
@@ -957,7 +1047,8 @@ void ParamTable::genAssembly()
             }
             else if (tmpelem.st == "call")
             {
-                cout << "MOV   SI,SP" << endl;
+                //cout << "MOV   SI,SP" << endl;
+                assemblyRes.push_back("MOV   SI,SP");
                 tmp = table_pfinf[tmpelem.id1];
                 tmp = synb[tmp].addr;
                 tmpsynb = tmpelem.id2;
@@ -965,12 +1056,15 @@ void ParamTable::genAssembly()
             else if (tmpelem.st == "params")
             {
                 toax(k, tmpelem.id0);
-                cout << "PUSH  AX" << endl;
+                //cout << "PUSH  AX" << endl;
+                assemblyRes.push_back("PUSH  AX");
             }
             else if (tmpelem.st == "callend")
             {
-                cout << "CALL  FUN" << tmp << endl;
-                cout << "POP   AX" << endl;
+                //cout << "CALL  FUN" << tmp << endl;
+                //cout << "POP   AX" << endl;
+                assemblyRes.push_back("CALL  FUN" + to_string(tmp));
+                assemblyRes.push_back("POP   AX");
                 axto(k, tmpsynb);
             }
             else if (tmpelem.st == "retnum")
@@ -978,24 +1072,30 @@ void ParamTable::genAssembly()
                 if (k != pfinf.size() - 1)
                 {
                     toax(k, tmpelem.id0);
-                    cout << "JMP   F" << k << "O" << endl;
+                    //cout << "JMP   F" << k << "O" << endl;
+                    assemblyRes.push_back("JMP   F" + to_string(k) + "O");
                 }
                 else
                 {
-                    cout << "MOV   AH,4CH" << endl;
-                    cout << "INT   21H" << endl;
+                    //cout << "MOV   AH,4CH" << endl;
+                    //cout << "INT   21H" << endl;
+                    assemblyRes.push_back("MOV   AH,4CH");
+                    assemblyRes.push_back("INT   21H");
                 }
             }
             else if (tmpelem.st == "ret")
             { //此处需要照retnum修改
                 if (k != pfinf.size() - 1)
                 {
-                    cout << "JMP   F" << k << "O" << endl;
+                    //cout << "JMP   F" << k << "O" << endl;
+                    assemblyRes.push_back("JMP   F" + to_string(k) + "O");
                 }
                 else
                 {
-                    cout << "MOV   AH,4CH" << endl;
-                    cout << "INT   21H" << endl;
+                    //cout << "MOV   AH,4CH" << endl;
+                    //cout << "INT   21H" << endl;
+                    assemblyRes.push_back("MOV   AH,4CH");
+                    assemblyRes.push_back("INT   21H");
                 }
             }
             else if (tmpelem.st == "arr1")
@@ -1009,30 +1109,59 @@ void ParamTable::genAssembly()
         }
         if (k != pfinf.size() - 1)
         {
-            cout << "F" << k << "O:  NOP" << endl;
-            cout << "MOV   CX," << (basicValls[k].size - basicValls[k].parsize) / 2 << endl;
-            cout << "F" << k << "O1:NOP" << endl;
-            cout << "POP   DX" << endl; //释放临时变量栈空间（size-psize-2)+旧BP（2）
-            cout << "LOOP  F" << k << "O1" << endl;
-            cout << "POP   SI" << endl; //取出IP
-            cout << "MOV   CX," << basicValls[k].parsize / 2 << endl;
-            cout << "F" << k << "O2:NOP" << endl;
-            cout << "POP   DX" << endl; //释放参数栈空间
-            cout << "LOOP  F" << k << "O2" << endl;
-            cout << "POP   BP" << endl;
-            cout << "PUSH  BP" << endl;
-            cout << "PUSH  AX" << endl;
-            cout << "PUSH  SI" << endl; //存回IP
-            cout << "RET" << endl;
-            cout << "FUN" << k << "  ENDP" << endl;
+            //cout << "F" << k << "O:  NOP" << endl;
+            //cout << "MOV   CX," << (basicValls[k].size - basicValls[k].parsize) / 2 << endl;
+            //cout << "F" << k << "O1:NOP" << endl;
+            //cout << "POP   DX" << endl; //释放临时变量栈空间（size-psize-2)+旧BP（2）
+            //cout << "LOOP  F" << k << "O1" << endl;
+            //cout << "POP   SI" << endl; //取出IP
+            //cout << "MOV   CX," << basicValls[k].parsize / 2 << endl;
+            //cout << "F" << k << "O2:NOP" << endl;
+            //cout << "POP   DX" << endl; //释放参数栈空间
+            //cout << "LOOP  F" << k << "O2" << endl;
+            //cout << "POP   BP" << endl;
+            //cout << "PUSH  BP" << endl;
+            //cout << "PUSH  AX" << endl;
+            //cout << "PUSH  SI" << endl; //存回IP
+            //cout << "RET" << endl;
+            //cout << "FUN" << k << "  ENDP" << endl;
+            assemblyRes.push_back("F" + to_string(k) + "O:  NOP");
+            assemblyRes.push_back("MOV   CX," + to_string((basicValls[k].size-basicValls[k].parsize)/2));
+            assemblyRes.push_back("F" + to_string(k) + "O1:NOP");
+            assemblyRes.push_back("POP   DX");
+            assemblyRes.push_back("LOOP  F" + to_string(k) + "O1");
+            assemblyRes.push_back("POP   SI");
+            assemblyRes.push_back("MOV   CX," + to_string(basicValls[k].parsize/2));
+            assemblyRes.push_back("F" + to_string(k) + "O2:NOP");
+            assemblyRes.push_back("POP   DX");
+            assemblyRes.push_back("LOOP  F" + to_string(k) + "O2");
+            assemblyRes.push_back("POP   BP");
+            assemblyRes.push_back("PUSH  BP");
+            assemblyRes.push_back("PUSH  AX");
+            assemblyRes.push_back("PUSH  SI");
+            assemblyRes.push_back("RET");
+            assemblyRes.push_back("FUN" + to_string(k) + "  ENDP");
         }
         else
         {
-            cout << "MOV   AH,4CH" << endl;
-            cout << "INT   21H" << endl;
-            cout << "CSEG  ENDS" << endl;
-            cout << "      END   START" << endl;
+            //cout << "MOV   AH,4CH" << endl;
+            //cout << "INT   21H" << endl;
+            //cout << "CSEG  ENDS" << endl;
+            //cout << "      END   START" << endl;
+            assemblyRes.push_back("MOV   AH,4CH");
+            assemblyRes.push_back("INT   21H");
+            assemblyRes.push_back("CSEG  ENDS");
+            assemblyRes.push_back("      END   START");
         }
     }
     valls.clear();
+}
+
+void ParamTable::outputAssembly()
+{
+    cout << "outputAssembly now" << endl;
+    for(int i = 0;i < assemblyRes.size();i++)
+    {
+        cout << assemblyRes.at(i) << endl;
+    }
 }

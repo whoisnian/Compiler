@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -428,7 +427,6 @@ void MainWindow::showParamTable()
         table->horizontalHeader()->setStretchLastSection(true);
         table->setEditTriggers(QAbstractItemView::NoEditTriggers);
         table->setSelectionBehavior(QAbstractItemView::SelectRows);
-        //table->resize(400, 594);
         table->resize(330, 594);
         table->setWindowIcon(QIcon::fromTheme("view-media-playlist"));
         table->setWindowTitle("符号表");
@@ -563,9 +561,7 @@ void MainWindow::runRun()
                   << "-c" << "C:"
                   << "-c" << "masm " + fileBaseName + ".asm," + fileBaseName + ".obj;"
                   << "-c" << "link " + fileBaseName + ".obj," + fileBaseName + ".exe;"
-                  << "-c" << fileBaseName + ".exe"
-                  << "-c" << "pause"
-                  << "-c" << "exit";
+                  << "-c" << fileBaseName + ".exe";
         runDosbox->start(command, arguments);
     }
 }

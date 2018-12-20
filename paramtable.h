@@ -70,9 +70,10 @@ struct vall{
 class ParamTable
 {
 public:
-    ParamTable(){haveErr = false;errMessagePT = "";}
-bool haveErr;
-string errMessagePT;
+    ParamTable(){haveErr = false;errMessagePT = "";assemblyRes.clear();}
+bool haveErr;               // 错误标记
+string errMessagePT;        // 错误信息
+vector<string> assemblyRes; // 汇编代码结果
 
 vector<synbl> synb;
 vector<pfinfl> pfinf;
@@ -116,6 +117,7 @@ void genValls();
 void gen4elem();
 void outputParam();
 void genAssembly();
+void outputAssembly();
 
 void toax(int k, int id,int diffid=-1);
 void tocx(int k, int id,int diffid=-1);
