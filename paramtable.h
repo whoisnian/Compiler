@@ -14,7 +14,6 @@ using namespace std;
 通过符号表可以很好的指定每个变量在内存中的位置
 to-do list：
 增加活跃信息处理
-alpush数组处理（放弃）
 增加数据类型
 增加对无符号数的支持
 优化：除去未使用变量
@@ -37,7 +36,7 @@ struct pfinfl{
     int entry;
 };
 struct consl{
-    int data,loc;
+    int data;
 };
 struct lenl{
     int len;
@@ -88,8 +87,8 @@ int size_consl;
 int size_tmp;
 int loc_main;
 int id_tmp;
-stack<char> alNums;
-map<int, int> table_synb, table_pfinf, table_cons;
+stack<int> alNums;
+map<int, int> table_synb, table_pfinf, table_cons, table_ainf;
 vector<vall> valls;
 vector<vall> basicValls;
 
@@ -118,9 +117,9 @@ void gen4elem();
 void outputParam();
 void genAssembly();
 
-void toax(int k, int id);
-void tobx(int k, int id);
-void axto(int k, int id);
+void toax(int k, int id,int diffid=-1);
+void tocx(int k, int id,int diffid=-1);
+void axto(int k, int id,int diffid=-1);
 void jgjp(int k, string st, int tg);
 
 };

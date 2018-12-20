@@ -27,7 +27,8 @@ void ParamTable::initAll()
     table_synb.clear();
     table_pfinf.clear();
     table_cons.clear();
-    id_tmp = 100; //临时变量的开始值
+    table_ainf.clear();
+    id_tmp = 100; //临时变量的开始值，正常变量数大于100时需要修改这个值
 }
 void ParamTable::addFun(int id)
 {
@@ -109,10 +110,12 @@ void ParamTable::addArray(int id, int len, bool isparam)
     ainfl newA;
     newS.name = id;
     newS.cat = 'l';
-    newA.low = synb.size() + 1;
-    newA.up = synb.size() + len;
+    newA.low = id_tmp;
+    table_ainf.insert(make_pair(id_tmp, 1984));
+    newA.up = id_tmp + len - 1;
     ainf.push_back(newA);
     newS.addr = ainf.size() - 1;
+    table_ainf.insert(make_pair(id, synb.size()));
     synb.push_back(newS);
     if (isparam)
         pfinf[Funcs.top()].param.push_back(synb.size() - 1);
@@ -121,10 +124,8 @@ void ParamTable::addArray(int id, int len, bool isparam)
         pfinf[Funcs.top()].synbs.push_back(synb.size() - 1);
         for (int i = 1; i <= len; i++)
         {
-            synbl newSS;
-            newSS.name = -1;
-            newSS.cat = 'i';
-            synb.push_back(newSS);
+            addNum(id_tmp);
+            id_tmp++;
         }
     }
 }
@@ -133,24 +134,14 @@ void ParamTable::addCon(int id, int data)
 #ifdef DEBUG
     cout << "addCon" << endl;
 #endif
-    /*for (int i = 0; i < cons.size(); i++)
-    {
-        if (cons[i].data == data)
-        {
-            pfinf[Funcs.top()].synbs.push_back(cons[i].loc);
-            return;
-        }
-    }*/
     synbl newS;
     consl newC;
     newS.name = id;
     newS.cat = 'c';
     newC.data = data;
-    newC.loc = synb.size();
     cons.push_back(newC);
     newS.addr = cons.size() - 1;
     synb.push_back(newS);
-    pfinf[Funcs.top()].synbs.push_back(synb.size() - 1);
     table_cons.insert(make_pair(id, data));
 }
 void ParamTable::alGeq(string op)
@@ -158,7 +149,7 @@ void ParamTable::alGeq(string op)
 #ifdef DEBUG
     cout << "alGeq" << ' ' << op << endl;
 #endif
-    int id1, id2;
+    int id1, id2, diffid1 = -1, diffid2 = -1;
     if (alNums.empty())
     {
         haveErr = true;
@@ -170,6 +161,12 @@ void ParamTable::alGeq(string op)
     }
     id1 = alNums.top();
     alNums.pop();
+    if (table_ainf.count(id1))
+    {
+        diffid1 = alNums.top();
+        alNums.pop();
+        id1 = ainf[synb[table_ainf[id1]].addr].low;
+    }
     if (alNums.empty())
     {
         haveErr = true;
@@ -181,22 +178,50 @@ void ParamTable::alGeq(string op)
     }
     id2 = alNums.top();
     alNums.pop();
+    if (table_ainf.count(id2))
+    {
+        diffid2 = alNums.top();
+        alNums.pop();
+        id2 = ainf[synb[table_ainf[id2]].addr].low;
+    }
 #ifdef DEBUG
     cout << id1 << ' ' << id2 << endl;
 #endif
     if (op == "=")
     {
+        if (diffid1 != -1)
+        {
+        pfinf[Funcs.top()].elems.push_back(elems.size());
+            elems.push_back(elem("arr1", -1, -1, diffid1));
+        }
+        if (diffid2 != -1)
+        {
+            pfinf[Funcs.top()].elems.push_back(elems.size());
+            elems.push_back(elem("arr2", -1, -1, diffid2));
+        }
         pfinf[Funcs.top()].elems.push_back(elems.size());
         elems.push_back(elem(op, id1, -1, id2));
         alNums.push(id2);
     }
     else
     {
-        addNum(id_tmp);
+        if (diffid2 != -1)
+        {
+        pfinf[Funcs.top()].elems.push_back(elems.size());
+            elems.push_back(elem("arr1", -1, -1, diffid2));
+        }
+        if (diffid1 != -1)
+        {
+            pfinf[Funcs.top()].elems.push_back(elems.size());
+            elems.push_back(elem("arr2", -1, -1, diffid1));
+        }
         pfinf[Funcs.top()].elems.push_back(elems.size());
         addNum(id_tmp);
         elems.push_back(elem(op, id2, id1, id_tmp));
         alNums.push(id_tmp);
+#ifdef DEBUG
+        cout << "push " << alNums.top() << endl;
+#endif
         id_tmp++;
     }
 }
@@ -205,7 +230,7 @@ void ParamTable::alPush(int id, bool isarray)
 #ifdef DEBUG
     cout << "alPush" << ' ' << id << endl;
 #endif
-    if(!isarray)
+    if (!isarray)
         alNums.push(id);
     else
     {
@@ -313,7 +338,6 @@ void ParamTable::callBegin(int id)
         cout << "error: '"
              << "' was not declared in this scope" << endl;
 #endif
-        throw "callError";
         return;
     }
     calls.push(id);
@@ -423,11 +447,11 @@ void ParamTable::genValls() //生成活动记录表
         {
             nowvall.var.insert(make_pair(synb[pfinf[k].synbs[i]].name, sum));
             sum += 2;
-            if (synb[pfinf[k].synbs[i]].cat == 'l')
+            /*if (synb[pfinf[k].synbs[i]].cat == 'l')
             {
                 sum += 2 * (ainf[synb[pfinf[k].synbs[i]].addr].up - ainf[synb[pfinf[k].synbs[i]].addr].low);
+            }*/
             }
-        }
         nowvall.size = sum;
         basicValls.push_back(nowvall);
     }
@@ -477,37 +501,64 @@ void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位�
             sem.pop();
         }
     }
-    vector<int>tmpelems;
-    elem tmpelem("",-1,-1,-1);
-    int l,r,num;
+    vector<int> tmpelems;
+    int iscons[1000];
+    elem tmpelem("", -1, -1, -1);
+    int piecel, piecer, l, r, num;
     for (k = 1; k < pfinf.size(); k++)
     {
-        tmpelems.clear();
+        memset(iscons,255,sizeof(iscons));
         for (i = 0; i < pfinf[k].elems.size(); i++)
         {
             tmpelem = elems[pfinf[k].elems[i]];
-            if(tmpelem.iscntop())
+            if (tmpelem.iscntop())
             {
-                if(table_cons.count(tmpelem.id1)&&table_cons.count(tmpelem.id2))
+                if ((table_cons.count(tmpelem.id1) || iscons[tmpelem.id1] != -1) && (table_cons.count(tmpelem.id2) || iscons[tmpelem.id2] != -1)) //常数表达式优化(含常数推进)
                 {
-                    synb[basicValls[k].var[tmpelem.id0]].cat='c';
-                    l=table_cons[tmpelem.id1];
-                    r=table_cons[tmpelem.id2];
-                    if(tmpelem.st=="+")
-                        num=l+r;
-                    else if(tmpelem.st=="-")
-                        num=l-r;
-                    else if(tmpelem.st=="*")
-                        num=l*r;
-                    else if(tmpelem.st=="/")
-                        num=l/r;
-                    table_cons.insert(make_pair(tmpelem.id0,num));
+                    if (iscons[tmpelem.id1] != -1)
+                        l = iscons[tmpelem.id1];
+                    else
+                        l = table_cons[tmpelem.id1];
+                    if (iscons[tmpelem.id2] != -1)
+                        r = iscons[tmpelem.id2];
+                    else
+                        r = table_cons[tmpelem.id2];
+                    if (tmpelem.st == "+")
+                        num = l + r;
+                    else if (tmpelem.st == "-")
+                        num = l - r;
+                    else if (tmpelem.st == "*")
+                        num = l * r;
+                    else if (tmpelem.st == "/")
+                        num = l / r;
+                    elems[pfinf[k].elems[i]] = elem("=", id_tmp, -1, tmpelem.id0);
+                    addCon(id_tmp, num);
+                    id_tmp++;
+                    iscons[tmpelem.id0]=num;
+#ifdef DEBUG
+                    cout<<"----"<<tmpelem.id0<<endl;
+#endif
                 }else  
-                    tmpelems.push_back(pfinf[k].elems[i]);
+                    iscons[tmpelem.id0]=-1;
             }else
-                tmpelems.push_back(pfinf[k].elems[i]);
+            {
+                if(tmpelem.st=="=")
+                {
+                    if(table_cons.count(tmpelem.id1)||iscons[tmpelem.id1]!=-1)
+                    {
+                        if (iscons[tmpelem.id1] != -1)
+                            l = iscons[tmpelem.id1];
+                        else
+                            l = table_cons[tmpelem.id1];
+                        iscons[tmpelem.id0]=l;
+                    }else
+                    {
+                        iscons[tmpelem.id0]=-1;
         }
-        pfinf[k].elems=tmpelems;
+                }else
+                    memset(iscons,255,sizeof(iscons));               
+    }
+        }
     }
 #ifdef DEBUG
     for (i = 0; i < elems.size(); i++)
@@ -566,51 +617,178 @@ void ParamTable::outputParam()
         printf("%d\n", basicValls[i].size);
     }
 }
-void ParamTable::toax(int k, int id) //输出到从内存提取到ax的汇编指令
+void ParamTable::toax(int k, int id, int diffid) //输出到从内存提取到ax的汇编指令
 {
-    if (table_cons.count(id))
+    if (table_cons.count(id)) //为常数
     {
         cout << "MOV   AX," << table_cons[id] << endl;
     }
-    else if (basicValls[0].var.count(id))
+    else if (basicValls[k].var.count(id)) //考虑是局部变量还是全局变量
     {
-        id = basicValls[0].var[id];
-        cout << "MOV   AX,[DI+" << id << "]" << endl;
+        id = basicValls[k].var[id];
+        if (diffid == -1)
+            cout << "MOV   AX,[BP-" << id + 2 << "]" << endl;
+        else //为数组，考虑偏移量是否是全局变量
+        {
+            if (table_cons.count(diffid))
+            {
+                cout << "MOV   SI," << table_cons[diffid] << endl;
+            }
+            else if (basicValls[0].var.count(diffid))
+            {
+                diffid = basicValls[0].var[diffid];
+                cout << "MOV   SI,[BX+" << diffid << "]" << endl;
+            }
+            else
+            {
+                diffid = basicValls[k].var[diffid];
+                cout << "MOV   SI,[BP-" << diffid + 2 << "]" << endl;
+            }
+            cout << "SHL   SI,1" << endl;
+            cout << "NEG   SI" << endl;
+            cout << "MOV   AX,[BP+SI-" << id + 2 << "]" << endl;
+        }
     }
     else
     {
-        id = basicValls[k].var[id];
-        cout << "MOV   AX,[BP-" << id + 2 << "]" << endl;
+        id = basicValls[0].var[id];
+        if (diffid == -1)
+            cout << "MOV   AX,[BX+" << id << "]" << endl;
+        else //为数组，考虑偏移量是否是全局变量
+        {
+            if (table_cons.count(diffid))
+            {
+                cout << "MOV   DI," << table_cons[diffid] << endl;
+            }
+            else if (basicValls[0].var.count(diffid))
+            {
+                diffid = basicValls[0].var[diffid];
+                cout << "MOV   DI,[BX+" << diffid << "]" << endl;
+    }
+    else
+    {
+                diffid = basicValls[k].var[diffid];
+                cout << "MOV   DI,[BP-" << diffid + 2 << "]" << endl;
+            }
+            cout << "SHL   DI,1" << endl;
+            cout << "MOV   AX,[BX+DI+" << id << "]" << endl;
+        }
     }
 }
-void ParamTable::tobx(int k, int id) //输出到从内存提取到ax的汇编指令
+void ParamTable::tocx(int k, int id, int diffid) //输出到从内存提取到ax的汇编指令
 {
     if (table_cons.count(id))
     {
-        cout << "MOV   BX," << table_cons[id] << endl;
+        cout << "MOV   CX," << table_cons[id] << endl;
     }
-    else if (basicValls[0].var.count(id))
+    else if (basicValls[k].var.count(id)) //考虑是局部变量还是全局变量
     {
-        id = basicValls[0].var[id];
-        cout << "MOV   BX,[DI+" << id << "]" << endl;
+        id = basicValls[k].var[id];
+        if (diffid == -1)
+            cout << "MOV   CX,[BP-" << id + 2 << "]" << endl;
+        else //为数组，考虑偏移量是否是全局变量
+        {
+            if (table_cons.count(diffid))
+            {
+                cout << "MOV   SI," << table_cons[diffid] << endl;
+            }
+            else if (basicValls[0].var.count(diffid))
+            {
+                diffid = basicValls[0].var[diffid];
+                cout << "MOV   SI,[BX+" << diffid << "]" << endl;
+            }
+            else
+            {
+                diffid = basicValls[k].var[diffid];
+                cout << "MOV   SI,[BP-" << diffid + 2 << "]" << endl;
+            }
+            cout << "SHL   SI,1" << endl;
+            cout << "NEG   SI" << endl;
+            cout << "MOV   CX,[BP+SI-" << id + 2 << "]" << endl;
+        }
     }
     else
     {
-        id = basicValls[k].var[id];
-        cout << "MOV   BX,[BP-" << id + 2 << "]" << endl;
+        id = basicValls[0].var[id];
+        if (diffid == -1)
+            cout << "MOV   CX,[BX+" << id << "]" << endl;
+        else //为数组，考虑偏移量是否是全局变量
+        {
+            if (table_cons.count(diffid))
+            {
+                cout << "MOV   DI," << table_cons[diffid] << endl;
+            }
+            else if (basicValls[0].var.count(diffid))
+            {
+                diffid = basicValls[0].var[diffid];
+                cout << "MOV   DI,[BX+" << diffid << "]" << endl;
+    }
+    else
+    {
+                diffid = basicValls[k].var[diffid];
+                cout << "MOV   DI,[BP-" << diffid + 2 << "]" << endl;
+            }
+            cout << "SHL   DI,1" << endl;
+            cout << "MOV   CX,[BX+DI+" << id << "]" << endl;
+        }
     }
 }
-void ParamTable::axto(int k, int id) //输出到从ax提取到内存的汇编指令
+void ParamTable::axto(int k, int id, int diffid) //输出到从ax提取到内存的汇编指令
 {
-    if (basicValls[0].var.count(id))
+    if (table_cons.count(id))
     {
-        id = basicValls[0].var[id];
-        cout << "MOV   [DI+" << id << "],AX" << endl;
+        cout << "MOV   CX," << table_cons[id] << endl;
+    }
+    else if (basicValls[k].var.count(id)) //考虑是局部变量还是全局变量
+    {
+        id = basicValls[k].var[id];
+        if (diffid == -1)
+            cout << "MOV   [BP-" << id + 2 << "],AX" << endl;
+        else //为数组，考虑偏移量是否是全局变量
+        {
+            if (table_cons.count(diffid))
+            {
+                cout << "MOV   SI," << table_cons[diffid] << endl;
+    }
+            else if (basicValls[0].var.count(diffid))
+            {
+                diffid = basicValls[0].var[diffid];
+                cout << "MOV   SI,[BX+" << diffid << "]" << endl;
+}
+            else
+{
+                diffid = basicValls[k].var[diffid];
+                cout << "MOV   SI,[BP-" << diffid + 2 << "]" << endl;
+            }
+            cout << "SHL   SI,1" << endl;
+            cout << "NEG   SI" << endl;
+            cout << "MOV   [BP+SI-" << id + 2 << "],AX" << endl;
+        }
     }
     else
     {
-        id = basicValls[k].var[id];
-        cout << "MOV   [BP-" << id + 2 << "],AX" << endl;
+        id = basicValls[0].var[id];
+        if (diffid == -1)
+            cout << "MOV   [BX+" << id << "],AX" << endl;
+        else //为数组，考虑偏移量是否是全局变量
+        {
+            if (table_cons.count(diffid))
+            {
+                cout << "MOV   DI," << table_cons[diffid] << endl;
+            }
+            else if (basicValls[0].var.count(diffid))
+            {
+                diffid = basicValls[0].var[diffid];
+                cout << "MOV   DI,[BX+" << diffid << "]" << endl;
+    }
+    else
+    {
+                diffid = basicValls[k].var[diffid];
+                cout << "MOV   DI,[BP-" << diffid + 2 << "]" << endl;
+            }
+            cout << "SHL   DI,1" << endl;
+            cout << "MOV   [BX+DI+" << id << "],AX" << endl;
+        }
     }
 }
 void ParamTable::jgjp(int k, string st, int tg) //符合条件则跳转
@@ -646,7 +824,7 @@ void ParamTable::jgjp(int k, string st, int tg) //符合条件则跳转
 }
 void ParamTable::genAssembly()
 {
-    int i, j, k, id0, id1, id2, tmpjmp = -1, tmp, tmpsynb;
+    int i, j, k, id0, id1, id2, tmpjmp = -1, tmp, tmpsynb, diffid1 = -1, diffid2 = -1;
     string tmpst;
     elem tmpelem("", -1, -1, -1);
     cout << "SSEG  SEGMENT" << endl;
@@ -676,7 +854,7 @@ void ParamTable::genAssembly()
             cout << "MOV   AX,SSEG" << endl;
             cout << "MOV   SS,AX" << endl;
             cout << "MOV   BP,SP" << endl;           //BP：当前函数栈顶
-            cout << "MOV   DI,OFFSET MAINV" << endl; //DI：全局变量
+            cout << "MOV   BX,OFFSET MAINV" << endl; //DI：全局变量
             cout << "MOV   AX,0" << endl;
             cout << "MOV   CX," << basicValls[k].size / 2 << endl;
             cout << "F" << k << "IN: NOP" << endl;
@@ -701,42 +879,49 @@ void ParamTable::genAssembly()
                 cout << "F" << k << "T" << pfinf[k].elems[i] << ": NOP" << endl;
             if (tmpelem.st == "=")
             {
-                toax(k, tmpelem.id1);
-                axto(k, tmpelem.id0);
+
+                toax(k, tmpelem.id1, diffid1);
+                diffid1 = -1;
+                axto(k, tmpelem.id0, diffid2);
+                diffid2 = -1;
             }
             else if (tmpelem.iscntop())
             {
-                toax(k, tmpelem.id1);
-                tobx(k, tmpelem.id2);
+                toax(k, tmpelem.id1, diffid1);
+                diffid1 = -1;
+                tocx(k, tmpelem.id2, diffid2);
+                diffid2 = -1;
                 if (tmpelem.st == "+")
                 {
-                    cout << "ADD   AX,BX" << endl;
+                    cout << "ADD   AX,CX" << endl;
                 }
                 else if (tmpelem.st == "-")
                 {
-                    cout << "SUB   AX,BX" << endl;
+                    cout << "SUB   AX,CX" << endl;
                 }
                 else if (tmpelem.st == "*")
                 {
-                    cout << "MUL   BX" << endl;
+                    cout << "MUL   CX" << endl;
                 }
                 else if (tmpelem.st == "/")
                 {
                     cout << "MOV   DX,0" << endl;
-                    cout << "DIV   BX" << endl;
+                    cout << "DIV   CX" << endl;
                 }
                 else if (tmpelem.st == "%")
                 {
-                    cout << "DIV   BX" << endl;
+                    cout << "DIV   CX" << endl;
                     cout << "MOV   AX,DX" << endl;
                 }
                 axto(k, tmpelem.id0);
             }
             else if (tmpelem.isjugop())
             {
-                toax(k, tmpelem.id1);
-                tobx(k, tmpelem.id2);
-                cout << "CMP   AX,BX" << endl;
+                toax(k, tmpelem.id1, diffid1);
+                diffid1 = -1;
+                tocx(k, tmpelem.id2, diffid2);
+                diffid2 = -1;
+                cout << "CMP   AX,CX" << endl;
                 cout << "MOV   AX,1" << endl;
                 jgjp(0, tmpelem.st, ++tmpjmp);
                 cout << "MOV   AX,0" << endl;
@@ -812,6 +997,14 @@ void ParamTable::genAssembly()
                     cout << "INT   21H" << endl;
                 }
             }
+            else if (tmpelem.st == "arr1")
+            {
+                diffid1 = tmpelem.id0;
+            }
+            else if (tmpelem.st == "arr2")
+            {
+                diffid2 = tmpelem.id0;
+            }
         }
         if (k != pfinf.size() - 1)
         {
@@ -842,6 +1035,3 @@ void ParamTable::genAssembly()
     }
     valls.clear();
 }
-/*
-要解决的问题：出栈入栈的位置对不对？代码段和堆栈段冲突如何解决？
-*/
