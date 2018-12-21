@@ -28,7 +28,9 @@ void ParamTable::initAll()
     table_pfinf.clear();
     table_cons.clear();
     table_ainf.clear();
-    id_tmp = 100; //临时变量的开始值，正常变量数大于100时需要修改这个值
+    beginidx_id_tmp=100;
+    id_tmp = beginidx_id_tmp; //临时变量的开始值，正常变量数大于100时需要修改这个值
+    memset(inalNums,0,sizeof(inalNums));
 }
 void ParamTable::addFun(int id)
 {
@@ -125,6 +127,7 @@ void ParamTable::addArray(int id, int len, bool isparam)
         for (int i = 1; i <= len; i++)
         {
             addNum(id_tmp);
+            inalNums[id_tmp]=1;
             id_tmp++;
         }
     }
@@ -216,9 +219,15 @@ void ParamTable::alGeq(string op)
             elems.push_back(elem("arr2", -1, -1, diffid1));
         }
         pfinf[Funcs.top()].elems.push_back(elems.size());
+        if(min(id1,id2)>=beginidx_id_tmp)//减少临时变量开销
+            id_tmp=min(id1,id2);
+        else if(max(id1,id2)>=beginidx_id_tmp)
+            id_tmp=max(id1,id2);
+        else
         addNum(id_tmp);
         elems.push_back(elem(op, id2, id1, id_tmp));
         alNums.push(id_tmp);
+        inalNums[id_tmp]=1;
 #ifdef DEBUG
         cout << "push " << alNums.top() << endl;
 #endif
@@ -347,6 +356,7 @@ void ParamTable::callBegin(int id)
     elems.push_back(elem("call", id, id_tmp, -1));
     addNum(id_tmp);
     alNums.push(id_tmp);
+    inalNums[id_tmp]=1;
     id_tmp++;
 }
 void ParamTable::callEnd()
@@ -503,10 +513,12 @@ void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位�
         }
     }
     vector<int> tmpelems;
-    int iscons[1000];
+    int iscons[1000],used[1000],lastmodify[1000];//是否现在是常数/是否被使用了（否则就是垃圾语句）/上次修改位置
+    map<pair<int,int>,pair<int,int> > oldtonew;//<id1,id2>-><id0,location>
+    map<int,pair<int,int> >newtoold;
     elem tmpelem("", -1, -1, -1);
     int piecel, piecer, l, r, num;
-    for (k = 1; k < pfinf.size(); k++)
+    for (k = 1; k < pfinf.size(); k++)//常数表达式优化(含常数推进)
     {
         memset(iscons,255,sizeof(iscons));
         for (i = 0; i < pfinf[k].elems.size(); i++)
@@ -514,7 +526,7 @@ void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位�
             tmpelem = elems[pfinf[k].elems[i]];
             if (tmpelem.iscntop())
             {
-                if ((table_cons.count(tmpelem.id1) || iscons[tmpelem.id1] != -1) && (table_cons.count(tmpelem.id2) || iscons[tmpelem.id2] != -1)) //常数表达式优化(含常数推进)
+                if ((table_cons.count(tmpelem.id1) || iscons[tmpelem.id1] != -1) && (table_cons.count(tmpelem.id2) || iscons[tmpelem.id2] != -1)) 
                 {
                     if (iscons[tmpelem.id1] != -1)
                         l = iscons[tmpelem.id1];
@@ -536,9 +548,6 @@ void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位�
                     addCon(id_tmp, num);
                     id_tmp++;
                     iscons[tmpelem.id0]=num;
-#ifdef DEBUG
-                    cout<<"----"<<tmpelem.id0<<endl;
-#endif
                 }else  
                     iscons[tmpelem.id0]=-1;
             }else
@@ -559,6 +568,65 @@ void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位�
                 }else
                     memset(iscons,255,sizeof(iscons));               
     }
+        }
+    }
+    for (k = 1; k < pfinf.size(); k++)//dag优化
+    {
+        memset(used,255,sizeof(used));
+        memset(lastmodify,255,sizeof(lastmodify));
+        oldtonew.clear();
+        newtoold.clear();
+        for (i = 0; i < pfinf[k].elems.size(); i++)
+        {
+            tmpelem = elems[pfinf[k].elems[i]];
+            if (tmpelem.iscntop()||tmpelem.st=="="||tmpelem.st=="arr1"||tmpelem.st=="arr2")
+            {        
+                if(tmpelem.iscntop())
+                {
+                    if(tmpelem.id1!=tmpelem.id0&&tmpelem.id2!=tmpelem.id0&&lastmodify[tmpelem.id0]!=-1&&used[tmpelem.id0]<lastmodify[tmpelem.id0])//如果上次修改后到现在未使用过，删除上次对应的四元式
+                    {
+                        elems[pfinf[k].elems[lastmodify[tmpelem.id0]]] = elem("deleted",-1 , -1, tmpelem.id0);
+                        oldtonew.erase(make_pair(tmpelem.id1,tmpelem.id2));
+                        if(tmpelem.st=="+"||tmpelem.st=="*")
+                            oldtonew.erase(make_pair(tmpelem.id2,tmpelem.id1));
+                    }
+                    if(oldtonew.count(make_pair(tmpelem.id1,tmpelem.id2)))//之前有过同样的表达式且目标变量未改变过时直接复用
+                    {
+                        int location=oldtonew[make_pair(tmpelem.id1,tmpelem.id2)].second;
+                        int newid=oldtonew[make_pair(tmpelem.id1,tmpelem.id2)].first;
+                        if(location>lastmodify[tmpelem.id1]&&location>lastmodify[tmpelem.id2])
+                        {
+                            elems[pfinf[k].elems[i]] = elem("=",newid , -1, tmpelem.id0);
+                            used[newid]=i;
+                            lastmodify[tmpelem.id0]=i;
+                        }
+                    }else
+                    {
+                        used[tmpelem.id1]=used[tmpelem.id2]=i;
+                        lastmodify[tmpelem.id0]=i;
+                        oldtonew.insert(make_pair(make_pair(tmpelem.id1,tmpelem.id2),make_pair(tmpelem.id0,i)));
+                        if(tmpelem.st=="+"||tmpelem.st=="*")
+                            oldtonew.insert(make_pair(make_pair(tmpelem.id2,tmpelem.id1),make_pair(tmpelem.id0,i)));
+                    }
+                }else if(tmpelem.st=="=")
+                {
+                    if(lastmodify[tmpelem.id0]!=-1&&used[tmpelem.id0]<lastmodify[tmpelem.id0])//如果上次修改后到现在未使用过，删除上次对应的四元式
+                    {
+                        elems[pfinf[k].elems[lastmodify[tmpelem.id0]]] = elem("deleted",tmpelem.id1 , -1, tmpelem.id0);
+                    }
+                    used[tmpelem.id1]=i;
+                    lastmodify[tmpelem.id0]=i;
+                }else
+                {
+                    used[tmpelem.id0]=i;
+                }
+            }else
+            {
+                memset(used,255,sizeof(used));
+                memset(lastmodify,255,sizeof(lastmodify));
+                oldtonew.clear();
+                newtoold.clear();
+            }
         }
     }
 #ifdef DEBUG

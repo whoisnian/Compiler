@@ -11,13 +11,9 @@
 #include<algorithm>
 using namespace std;
 /*
-通过符号表可以很好的指定每个变量在内存中的位置
 to-do list：
 增加活跃信息处理
 增加数据类型
-增加对无符号数的支持
-优化：除去未使用变量
-优化：及时清除已使用临时变量
 */
 struct synbl{
     int name;
@@ -86,9 +82,10 @@ int size_pfinfl;
 int size_ainfl;
 int size_consl;
 int size_tmp;
-int loc_main;
-int id_tmp;
-stack<int> alNums;
+int beginidx_id_tmp;//临时变量开始位置
+int id_tmp;//临时变量编号
+int inalNums[400];//判断临时变量是否在用
+stack<int> alNums;//算术栈
 map<int, int> table_synb, table_pfinf, table_cons, table_ainf;
 vector<vall> valls;
 vector<vall> basicValls;
