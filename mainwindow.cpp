@@ -585,7 +585,7 @@ void MainWindow::runCompile()
         showEditor->setPlainText(srcCode);
         showEditor->setWindowTitle("汇编代码");
         showEditor->setWindowIcon(QIcon::fromTheme("format-text-code"));
-        showEditor->resize(400, 594);
+        showEditor->resize(450, 594);
         showEditor->show();
         return;
     }
