@@ -12,7 +12,6 @@
 using namespace std;
 /*
 to-do list：
-增加活跃信息处理
 增加数据类型
 */
 struct synbl{
@@ -89,6 +88,9 @@ stack<int> alNums;//算术栈
 map<int, int> table_synb, table_pfinf, table_cons, table_ainf;
 vector<vall> valls;
 vector<vall> basicValls;
+vector<bool>qt[3];//活跃信息表，对应每个四元式id0，id1和id2的活跃信息
+int symbl[400];
+int locra,locradiff,locrc,locrcdiff;//当前寄存器内容
 
 void initAll();
 void addFun(int id);
@@ -105,6 +107,8 @@ void exEl();
 void exWh();
 void exDo();
 void exWe();
+void exIn();
+void exOut();
 void callBegin(int id);
 void callEnd();
 void callParam();

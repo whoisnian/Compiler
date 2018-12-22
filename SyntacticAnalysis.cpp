@@ -209,6 +209,16 @@ void Syntax::prepare_for_4elem()
                 prepare_for_4elem();
                 return;
             }
+        case PROCESS_STATEMENT_6:
+            {
+                prepare_for_4elem();
+                return;
+            }
+        case PROCESS_STATEMENT_7:
+            {
+                prepare_for_4elem();
+                return;
+            }
         case PROCESS_EXPRESSION_STMT_1:
             {
                 prepare_for_4elem();
@@ -472,6 +482,26 @@ void Syntax::prepare_for_4elem()
             {
                 return;
             }
+        case PROCESS_INPUT_STMT:
+            {
+                scanner.next();
+                scanner.next();
+                prepare_for_4elem();
+                exIn();
+                scanner.next();
+                scanner.next();
+                return;
+            }
+        case PROCESS_OUTPUT_STMT:
+            {
+                scanner.next();
+                scanner.next();
+                prepare_for_4elem();
+                exOut();
+                scanner.next();
+                scanner.next();
+                return;
+            }
         default:
             {
                 return;
@@ -492,7 +522,7 @@ int Syntax::program()
     res = declaration_list();
     if(res == 0)
     {
-        return 0;   // 1 <program> := <declaration_list>
+        return 0;   // <program> := <declaration_list>
     }
     else
     {
@@ -517,7 +547,7 @@ int Syntax::declaration_list()
         res = declaration_list_tail();
         if(res == 0)
         {
-            return 0;   // 2 <declaration_list> := <declaration> <declaration_list_tail>
+            return 0;   // <declaration_list> := <declaration> <declaration_list_tail>
         }
         else
         {
@@ -549,14 +579,14 @@ int Syntax::declaration_list_tail()
         res = declaration_list_tail();
         if(res == 0)
         {
-            return 0;   // 3 <declaration_list_tail> := <declaration> <deliaration_list_tail>
+            return 0;   // <declaration_list_tail> := <declaration> <deliaration_list_tail>
         }
         else
         {
             while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_DECLARATION_LIST_TAIL_2);
             scanner.setIndex(ori_index);
-            return 0;   // 4 <declaration_list_tail> := <empty>
+            return 0;   // <declaration_list_tail> := <empty>
         }
     }
     else
@@ -564,7 +594,7 @@ int Syntax::declaration_list_tail()
         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_DECLARATION_LIST_TAIL_2);
         scanner.setIndex(ori_index);
-        return 0;   // 4 <declaration_list_tail> := <empty>
+        return 0;   // <declaration_list_tail> := <empty>
     }
 }
 
@@ -580,7 +610,7 @@ int Syntax::declaration()
     res = var_declaration();
     if(res == 0)
     {
-        return 0;   // 5 <declaration> := <var_declaration>
+        return 0;   // <declaration> := <var_declaration>
     }
     else
     {
@@ -590,7 +620,7 @@ int Syntax::declaration()
         res = fun_declaration();
         if(res == 0)
         {
-            return 0;   // 6 <declaration> := <fun_declaration>
+            return 0;   // <declaration> := <fun_declaration>
         }
         else
         {
@@ -621,7 +651,7 @@ int Syntax::var_declaration()
             if(temp.isDelimiter()&&temp.name == std::string(";"))
             {
                 //addNum(pretemp.identifierAndIntPos);
-                return 0;   // 7 <var_declaration> := <type_specifier> ID ;
+                return 0;   // <var_declaration> := <type_specifier> ID ;
             }
             else if(temp.isDelimiter()&&temp.name == std::string("["))
             {
@@ -636,7 +666,7 @@ int Syntax::var_declaration()
                         if(temp.isDelimiter()&&temp.name == std::string(";"))
                         {
                             syntaxProcess.at(ori_process) = PROCESS_VAR_DECLARATION_2;
-                            return 0;   // 8 <var_declaration> := <type_specifier> ID [ NUM ] ;
+                            return 0;   // <var_declaration> := <type_specifier> ID [ NUM ] ;
                         }
                         else
                         {
@@ -735,7 +765,7 @@ int Syntax::fun_declaration()
                         if(res == 0)
                         {
                             //backFun();
-                            return 0;   // 11 <fun_declaration> := <type_specifier> ID ( <params> ) <compound_stmt>
+                            return 0;   // <fun_declaration> := <type_specifier> ID ( <params> ) <compound_stmt>
                         }
                         else
                         {
@@ -808,12 +838,12 @@ int Syntax::type_specfier()
     if(temp.isKeyWord()&&temp.name == std::string("int"))
     {
         syntaxProcess.push_back(PROCESS_TYPE_SPECFIER_1);
-        return 0;   // 9 <type_specifier> := int
+        return 0;   // <type_specifier> := int
     }
     else if(temp.isKeyWord()&&temp.name == std::string("void"))
     {
         syntaxProcess.push_back(PROCESS_TYPE_SPECFIER_2);
-        return 0;   // 10 <type_specifier> := void
+        return 0;   // <type_specifier> := void
     }
     else
     {
@@ -840,7 +870,7 @@ int Syntax::params()
     res = param_list();
     if(res == 0)
     {
-        return 0;   // 12 <params> := <param_list>
+        return 0;   // <params> := <param_list>
     }
     else
     {
@@ -850,7 +880,7 @@ int Syntax::params()
         Token temp = scanner.next();
         if(temp.isKeyWord()&&temp.name == std::string("void"))
         {
-            return 0;   // 13 <params> := void
+            return 0;   // <params> := void
         }
         else
         {
@@ -881,7 +911,7 @@ int Syntax::param_list()
         res = param_list_tail();
         if(res == 0)
         {
-            return 0;   // 14 <param_list> := <parm> <parm_list_tail>
+            return 0;   // <param_list> := <parm> <parm_list_tail>
         }
         else
         {
@@ -916,14 +946,14 @@ int Syntax::param_list_tail()
             res = param_list_tail();
             if(res == 0)
             {
-                return 0;   // 15 <parm_list_tail> := , <param> <parm_list_tail>
+                return 0;   // <parm_list_tail> := , <param> <parm_list_tail>
             }
             else
             {
                 while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 syntaxProcess.push_back(PROCESS_PARAM_LIST_TAIL_2);
                 scanner.setIndex(ori_index);
-                return 0;   // 16 <parm_list_tail> := <empty>
+                return 0;   // <parm_list_tail> := <empty>
             }
         }
         else
@@ -931,7 +961,7 @@ int Syntax::param_list_tail()
             while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_PARAM_LIST_TAIL_2);
             scanner.setIndex(ori_index);
-            return 0;   // 16 <parm_list_tail> := <empty>
+            return 0;   // <parm_list_tail> := <empty>
         }
     }
     else
@@ -939,7 +969,7 @@ int Syntax::param_list_tail()
         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_PARAM_LIST_TAIL_2);
         scanner.setIndex(ori_index);
-        return 0;   // 16 <parm_list_tail> := <empty>
+        return 0;   // <parm_list_tail> := <empty>
     }
 }
 
@@ -966,7 +996,7 @@ int Syntax::param()
                 if(temp.isDelimiter()&&temp.name == std::string("]"))
                 {
                     //addArray(pretemp.identifierAndIntPos,true);
-                    return 0;   // 18 <param> := <type_specifier> ID [ ]
+                    return 0;   // <param> := <type_specifier> ID [ ]
                 }
                 else
                 {
@@ -974,7 +1004,7 @@ int Syntax::param()
                     syntaxProcess.at(ori_process) = PROCESS_PARAM_1;
                     scanner.back();
                     scanner.back();
-                    return 0;   // 17 <param> := <type_specifier> ID
+                    return 0;   // <param> := <type_specifier> ID
                 }
             }
             else
@@ -982,7 +1012,7 @@ int Syntax::param()
                 //addNum(pretemp.identifierAndIntPos,true);
                 syntaxProcess.at(ori_process) = PROCESS_PARAM_1;
                 scanner.back();
-                return 0;   // 17 <param> := <type_specifier> ID
+                return 0;   // <param> := <type_specifier> ID
             }
         }
         else
@@ -1026,7 +1056,7 @@ int Syntax::compound_stmt()
                 temp = scanner.next();
                 if(temp.isDelimiter()&&temp.name == std::string("}"))
                 {
-                    return 0;   // 19 <compound_stmt> := { <local_declarations> <statement_list> }
+                    return 0;   // <compound_stmt> := { <local_declarations> <statement_list> }
                 }
                 else
                 {
@@ -1083,14 +1113,14 @@ int Syntax::local_declarations()
         res = local_declarations_tail();
         if(res == 0)
         {
-            return 0;   // 20 <local_declarations> := <var_declaration> <local_declarations_tail>
+            return 0;   // <local_declarations> := <var_declaration> <local_declarations_tail>
         }
         else
         {
             while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_2);
             scanner.setIndex(ori_index);
-            return 0;   // 21 <local_declarations> := <empty>
+            return 0;   // <local_declarations> := <empty>
         }
     }
     else
@@ -1098,7 +1128,7 @@ int Syntax::local_declarations()
         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_2);
         scanner.setIndex(ori_index);
-        return 0;   // 21 <local_declarations> := <empty>
+        return 0;   // <local_declarations> := <empty>
     }
 }
 
@@ -1117,14 +1147,14 @@ int Syntax::local_declarations_tail()
         res = local_declarations_tail();
         if(res == 0)
         {
-            return 0;   // 22 <local_declarations_tail> := <var_declaration> <local_declarations_tail>
+            return 0;   // <local_declarations_tail> := <var_declaration> <local_declarations_tail>
         }
         else
         {
             while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_TAIL_2);
             scanner.setIndex(ori_index);
-            return 0;   // 23 <local_declarations_tail> := <empty>
+            return 0;   // <local_declarations_tail> := <empty>
         }
     }
     else
@@ -1132,7 +1162,7 @@ int Syntax::local_declarations_tail()
         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_LOCAL_DECLARATIONS_TAIL_2);
         scanner.setIndex(ori_index);
-        return 0;   // 23 <local_declarations_tail> := <empty>
+        return 0;   // <local_declarations_tail> := <empty>
     }
 }
 
@@ -1151,14 +1181,14 @@ int Syntax::statement_list()
         res = statement_list_tail();
         if(res == 0)
         {
-            return 0;   // 24 <statement_list> := <statement> <statement_list_tail>
+            return 0;   // <statement_list> := <statement> <statement_list_tail>
         }
         else
         {
             while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_STATEMENT_LIST_2);
             scanner.setIndex(ori_index);
-            return 0;   // 25 <statement_list> := <empty>
+            return 0;   // <statement_list> := <empty>
         }
     }
     else
@@ -1166,7 +1196,7 @@ int Syntax::statement_list()
         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_STATEMENT_LIST_2);
         scanner.setIndex(ori_index);
-        return 0;   // 25 <statement_list> := <empty>
+        return 0;   // <statement_list> := <empty>
     }
 }
 
@@ -1185,14 +1215,14 @@ int Syntax::statement_list_tail()
         res = statement_list_tail();
         if(res == 0)
         {
-            return 0;   // 26 <statement_list_tail> := <statement> <statement_list_tail>
+            return 0;   // <statement_list_tail> := <statement> <statement_list_tail>
         }
         else
         {
             while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_STATEMENT_LIST_TAIL_2);
             scanner.setIndex(ori_index);
-            return 0;   // 27 <statement_list_tail> := <empty>
+            return 0;   // <statement_list_tail> := <empty>
         }
     }
     else
@@ -1200,7 +1230,7 @@ int Syntax::statement_list_tail()
         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_STATEMENT_LIST_TAIL_2);
         scanner.setIndex(ori_index);
-        return 0;   // 27 <statement_list_tail> := <empty>
+        return 0;   // <statement_list_tail> := <empty>
     }
 }
 
@@ -1216,7 +1246,7 @@ int Syntax::statement()
     res = expression_stmt();
     if(res == 0)
     {
-        return 0;   // 28 <statement> := <expression_stmt>
+        return 0;   // <statement> := <expression_stmt>
     }
     else
     {
@@ -1226,7 +1256,7 @@ int Syntax::statement()
         res = compound_stmt();
         if(res == 0)
         {
-            return 0;   // 29 <statement> := <compound_stmt>
+            return 0;   // <statement> := <compound_stmt>
         }
         else
         {
@@ -1236,7 +1266,7 @@ int Syntax::statement()
             res = selection_stmt();
             if(res == 0)
             {
-                return 0;   // 30 <statement> := <selection_stmt>
+                return 0;   // <statement> := <selection_stmt>
             }
             else
             {
@@ -1246,7 +1276,7 @@ int Syntax::statement()
                 res = iteration_stmt();
                 if(res == 0)
                 {
-                    return 0;   // 31 <statement> := <iteration_stmt>
+                    return 0;   // <statement> := <iteration_stmt>
                 }
                 else
                 {
@@ -1256,13 +1286,35 @@ int Syntax::statement()
                     res = return_stmt();
                     if(res == 0)
                     {
-                        return 0;   // 32 <statement> := <return_stmt>
+                        return 0;   // <statement> := <return_stmt>
                     }
                     else
                     {
                         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                        syntaxProcess.push_back(PROCESS_STATEMENT_6);
                         scanner.setIndex(ori_index);
-                        return res;
+                        res = input_stmt();
+                        if(res == 0)
+                        {
+                            return 0;   // <statement> := <input_stmt>
+                        }
+                        else
+                        {
+                            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                            syntaxProcess.push_back(PROCESS_STATEMENT_7);
+                            scanner.setIndex(ori_index);
+                            res = output_stmt();
+                            if(res == 0)
+                            {
+                                return 0;   // <statement> := <output_stmt>
+                            }
+                            else
+                            {
+                                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                                scanner.setIndex(ori_index);
+                                return res;
+                            }
+                        }
                     }
                 }
             }
@@ -1285,7 +1337,7 @@ int Syntax::expression_stmt()
         Token temp = scanner.next();
         if(temp.isDelimiter()&&temp.name == std::string(";"))
         {
-            return 0;   // 33 <expression_stmt> := <expression> ;
+            return 0;   // <expression_stmt> := <expression> ;
         }
         else
         {
@@ -1295,7 +1347,7 @@ int Syntax::expression_stmt()
             Token temp = scanner.next();
             if(temp.isDelimiter()&&temp.name == std::string(";"))
             {
-                return 0;   // 34 <expression_stmt> := ;
+                return 0;   // <expression_stmt> := ;
             }
             else
             {
@@ -1318,7 +1370,7 @@ int Syntax::expression_stmt()
         Token temp = scanner.next();
         if(temp.isDelimiter()&&temp.name == std::string(";"))
         {
-            return 0;   // 34 <expression_stmt> := ;
+            return 0;   // <expression_stmt> := ;
         }
         else
         {
@@ -1369,7 +1421,7 @@ int Syntax::selection_stmt()
                             if(res == 0)
                             {
                                 //exIe();
-                                return 0;   // 36 <selection_stmt> := if ( <expression> ) <statement> else <statement>
+                                return 0;   // <selection_stmt> := if ( <expression> ) <statement> else <statement>
                             }
                             else
                             {
@@ -1377,7 +1429,7 @@ int Syntax::selection_stmt()
                                 while((int)syntaxProcess.size() > another_process) syntaxProcess.pop_back();
                                 syntaxProcess.at(ori_process) = PROCESS_SELECTION_STMT_1;
                                 scanner.setIndex(another_index);
-                                return 0;   // 35 <selection_stmt> := if ( <expression> ) <statement>
+                                return 0;   // <selection_stmt> := if ( <expression> ) <statement>
                             }
                         }
                         else
@@ -1385,7 +1437,7 @@ int Syntax::selection_stmt()
                             //exIe();
                             syntaxProcess.at(ori_process) = PROCESS_SELECTION_STMT_1;
                             scanner.back();
-                            return 0;   // 35 <selection_stmt> := if ( <expression> ) <statement>
+                            return 0;   // <selection_stmt> := if ( <expression> ) <statement>
                         }
                     }
                     else
@@ -1466,7 +1518,7 @@ int Syntax::iteration_stmt()
                     if(res == 0)
                     {
                         //exWe();
-                        return 0;   // 37 <iteration_stmt> := while ( <expression> ) <statement>
+                        return 0;   // <iteration_stmt> := while ( <expression> ) <statement>
                     }
                     else
                     {
@@ -1534,7 +1586,7 @@ int Syntax::return_stmt()
         temp = scanner.next();
         if(temp.isDelimiter()&&temp.name == std::string(";"))
         {
-            return 0;   // 38 <return_stmt> := return ;
+            return 0;   // <return_stmt> := return ;
         }
         else
         {
@@ -1546,7 +1598,7 @@ int Syntax::return_stmt()
                 if(temp.isDelimiter()&&temp.name == std::string(";"))
                 {
                     syntaxProcess.at(ori_process) = PROCESS_RETURN_STMT_2;
-                    return 0;   // 39 <return_stmt> := return <expression> ;
+                    return 0;   // <return_stmt> := return <expression> ;
                 }
                 else
                 {
@@ -1600,7 +1652,7 @@ int Syntax::expression()
             if(res == 0)
             {
                 //alGeq("=");
-                return 0;   // 40 <expression> := <var> = <expression>
+                return 0;   // <expression> := <var> = <expression>
             }
             else
             {
@@ -1628,7 +1680,7 @@ int Syntax::expression()
             res = simple_expression();
             if(res == 0)
             {
-                return 0;   // 41 <expression> := <simple_expression>
+                return 0;   // <expression> := <simple_expression>
             }
             else
             {
@@ -1646,7 +1698,7 @@ int Syntax::expression()
         res = simple_expression();
         if(res == 0)
         {
-            return 0;   // 41 <expression> := <simple_expression>
+            return 0;   // <expression> := <simple_expression>
         }
         else
         {
@@ -1682,7 +1734,7 @@ int Syntax::var()
                 if(temp.isDelimiter()&&temp.name == "]")
                 {
                     //alPush(pretemp.identifierAndIntPos,true);
-                    return 0;   // 43 <var> := ID [ <expression> ]
+                    return 0;   // <var> := ID [ <expression> ]
                 }
                 else
                 {
@@ -1690,7 +1742,7 @@ int Syntax::var()
                     while((int)syntaxProcess.size() > another_process) syntaxProcess.pop_back();
                     syntaxProcess.at(ori_process) = PROCESS_VAR_1;
                     scanner.setIndex(another_index);
-                    return 0;   // 42 <var> := ID
+                    return 0;   // <var> := ID
                 }
             }
             else
@@ -1699,7 +1751,7 @@ int Syntax::var()
                 while((int)syntaxProcess.size() > another_process) syntaxProcess.pop_back();
                 syntaxProcess.at(ori_process) = PROCESS_VAR_1;
                 scanner.setIndex(another_index);
-                return 0;   // 42 <var> := ID
+                return 0;   // <var> := ID
             }
         }
         else
@@ -1707,7 +1759,7 @@ int Syntax::var()
             //alPush(pretemp.identifierAndIntPos);
             syntaxProcess.at(ori_process) = PROCESS_VAR_1;
             scanner.back();
-            return 0;   // 42 <var> := ID
+            return 0;   // <var> := ID
         }
     }
     else
@@ -1746,14 +1798,14 @@ int Syntax::simple_expression()
             if(res == 0)
             {
                 //alGeq(temp.name);
-                return 0;   // 44 <simple_expression> := <additive_expression> <relop> <additive_expression>
+                return 0;   // <simple_expression> := <additive_expression> <relop> <additive_expression>
             }
             else
             {
                 while((int)syntaxProcess.size() > another_process) syntaxProcess.pop_back();
                 syntaxProcess.at(ori_process) = PROCESS_SIMPLE_EXPRESSION_2;
                 scanner.setIndex(another_index);
-                return 0;   // 45 <simple_expression> := <additive_expression>
+                return 0;   // <simple_expression> := <additive_expression>
             }
         }
         else
@@ -1761,7 +1813,7 @@ int Syntax::simple_expression()
             while((int)syntaxProcess.size() > another_process) syntaxProcess.pop_back();
             syntaxProcess.at(ori_process) = PROCESS_SIMPLE_EXPRESSION_2;
             scanner.setIndex(another_index);
-            return 0;   // 45 <simple_expression> := <additive_expression>
+            return 0;   // <simple_expression> := <additive_expression>
         }
     }
     else
@@ -1787,7 +1839,7 @@ int Syntax::additive_expression()
         res = additive_expression_tail();
         if(res == 0)
         {
-            return 0;   // 52 <additive_expression> := <term> <additive_expression_tail>
+            return 0;   // <additive_expression> := <term> <additive_expression_tail>
         }
         else
         {
@@ -1825,14 +1877,14 @@ int Syntax::additive_expression_tail()
             res = additive_expression_tail();
             if(res == 0)
             {
-                return 0;   // 53 <additive_expression_tail> := <addop> <term> <additive_expression_tail>
+                return 0;   // <additive_expression_tail> := <addop> <term> <additive_expression_tail>
             }
             else
             {
                 while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 syntaxProcess.push_back(PROCESS_ADDITIVE_EXPRESSION_TAIL_2);
                 scanner.setIndex(ori_index);
-                return 0;   // 54 <additive_expression_tail> := <empty>
+                return 0;   // <additive_expression_tail> := <empty>
             }
         }
         else
@@ -1840,7 +1892,7 @@ int Syntax::additive_expression_tail()
             while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_ADDITIVE_EXPRESSION_TAIL_2);
             scanner.setIndex(ori_index);
-            return 0;   // 54 <additive_expression_tail> := <empty>
+            return 0;   // <additive_expression_tail> := <empty>
         }
     }
     else
@@ -1848,7 +1900,7 @@ int Syntax::additive_expression_tail()
         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_ADDITIVE_EXPRESSION_TAIL_2);
         scanner.setIndex(ori_index);
-        return 0;   // 54 <additive_expression_tail> := <empty>
+        return 0;   // <additive_expression_tail> := <empty>
     }
 }
 
@@ -1861,32 +1913,32 @@ int Syntax::relop()
     if(temp.isDelimiter()&&temp.name == std::string("<="))
     {
         syntaxProcess.push_back(PROCESS_RELOP_1);
-        return 0;   // 46 <relop> := <=
+        return 0;   // <relop> := <=
     }
     else if(temp.isDelimiter()&&temp.name == std::string("<"))
     {
         syntaxProcess.push_back(PROCESS_RELOP_2);
-        return 0;   // 47 <relop> := <
+        return 0;   // <relop> := <
     }
     else if(temp.isDelimiter()&&temp.name == std::string(">"))
     {
         syntaxProcess.push_back(PROCESS_RELOP_3);
-        return 0;   // 48 <relop> := >
+        return 0;   // <relop> := >
     }
     else if(temp.isDelimiter()&&temp.name == std::string(">="))
     {
         syntaxProcess.push_back(PROCESS_RELOP_4);
-        return 0;   // 49 <relop> := >=
+        return 0;   // <relop> := >=
     }
     else if(temp.isDelimiter()&&temp.name == std::string("=="))
     {
         syntaxProcess.push_back(PROCESS_RELOP_5);
-        return 0;   // 50 <relop> := ==
+        return 0;   // <relop> := ==
     }
     else if(temp.isDelimiter()&&temp.name == std::string("!="))
     {
         syntaxProcess.push_back(PROCESS_RELOP_6);
-        return 0;   // 51 <relop> := !=
+        return 0;   // <relop> := !=
     }
     else
     {
@@ -1915,7 +1967,7 @@ int Syntax::term()
         res = term_tail();
         if(res == 0)
         {
-            return 0;   // 57 <term> := <factor> <term_tail>
+            return 0;   // <term> := <factor> <term_tail>
         }
         else
         {
@@ -1953,14 +2005,14 @@ int Syntax::term_tail()
             res = term_tail();
             if(res == 0)
             {
-                return 0;   // 58 <term_tail> := <mulop> <factor> <term_tail>
+                return 0;   // <term_tail> := <mulop> <factor> <term_tail>
             }
             else
             {
                 while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 syntaxProcess.push_back(PROCESS_TERM_TAIL_2);
                 scanner.setIndex(ori_index);
-                return 0;   // 59 <term_tail> := <empty>
+                return 0;   // <term_tail> := <empty>
             }
         }
         else
@@ -1968,7 +2020,7 @@ int Syntax::term_tail()
             while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_TERM_TAIL_2);
             scanner.setIndex(ori_index);
-            return 0;   // 59 <term_tail> := <empty>
+            return 0;   // <term_tail> := <empty>
         }
     }
     else
@@ -1976,7 +2028,7 @@ int Syntax::term_tail()
         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_TERM_TAIL_2);
         scanner.setIndex(ori_index);
-        return 0;   // 59 <term_tail> := <empty>
+        return 0;   // <term_tail> := <empty>
     }
 }
 
@@ -1989,12 +2041,12 @@ int Syntax::addop()
     if(temp.isDelimiter()&&temp.name == std::string("+"))
     {
         syntaxProcess.push_back(PROCESS_ADDOP_1);
-        return 0;   // 55 <addop> := +
+        return 0;   // <addop> := +
     }
     else if(temp.isDelimiter()&&temp.name == std::string("-"))
     {
         syntaxProcess.push_back(PROCESS_ADDOP_2);
-        return 0;   // 56 <addop> := -
+        return 0;   // <addop> := -
     }
     else
     {
@@ -2026,7 +2078,7 @@ int Syntax::factor()
             temp = scanner.next();
             if(temp.isDelimiter()&&temp.name == std::string(")"))
             {
-                return 0;   // 63 <factor> := ( <expression> )
+                return 0;   // <factor> := ( <expression> )
             }
             else
             {
@@ -2052,7 +2104,7 @@ int Syntax::factor()
         //addCon(temp.identifierAndIntPos,temp.valueInt);
         //alPush(temp.identifierAndIntPos);
         syntaxProcess.at(ori_process) = PROCESS_FACTOR_4;
-        return 0;   // 66 <factor> := NUM
+        return 0;   // <factor> := NUM
     }
     else
     {
@@ -2062,7 +2114,7 @@ int Syntax::factor()
         res = call();
         if(res == 0)
         {
-            return 0;   // 65 <factor> := <call>
+            return 0;   // <factor> := <call>
         }
         else
         {
@@ -2072,7 +2124,7 @@ int Syntax::factor()
             res = var();
             if(res == 0)
             {
-                return 0;   // 64 <factor> := <var>
+                return 0;   // <factor> := <var>
             }
             else
             {
@@ -2093,17 +2145,17 @@ int Syntax::mulop()
     if(temp.isDelimiter()&&temp.name == std::string("*"))
     {
         syntaxProcess.push_back(PROCESS_MULOP_1);
-        return 0;   // 60 <mulop> := *
+        return 0;   // <mulop> := *
     }
     else if(temp.isDelimiter()&&temp.name == std::string("/"))
     {
         syntaxProcess.push_back(PROCESS_MULOP_2);
-        return 0;   // 61 <mulop> := /
+        return 0;   // <mulop> := /
     }
     else if(temp.isDelimiter()&&temp.name == std::string("%"))
     {
         syntaxProcess.push_back(PROCESS_MULOP_3);
-        return 0;   // 62 <mulop> := %
+        return 0;   // <mulop> := %
     }
     else
     {
@@ -2141,7 +2193,7 @@ int Syntax::call()
                 if(temp.isDelimiter()&&temp.name == std::string(")"))
                 {
                     //callEnd();
-                    return 0;   // 67 <call> := ID ( <args> )
+                    return 0;   // <call> := ID ( <args> )
                 }
                 else
                 {
@@ -2199,14 +2251,14 @@ int Syntax::args()
     res = arg_list();
     if(res == 0)
     {
-        return 0;   // 68 <args> := <arg_list>
+        return 0;   // <args> := <arg_list>
     }
     else
     {
         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_ARGS_2);
         scanner.setIndex(ori_index);
-        return 0;   // 69 <args> := <empty>
+        return 0;   // <args> := <empty>
     }
 }
 
@@ -2226,7 +2278,7 @@ int Syntax::arg_list()
         res = arg_list_tail();
         if(res == 0)
         {
-            return 0;   // 70 <arg_list> := <expression> <arg_list_tail>
+            return 0;   // <arg_list> := <expression> <arg_list_tail>
         }
         else
         {
@@ -2262,14 +2314,14 @@ int Syntax::arg_list_tail()
             res = arg_list_tail();
             if(res == 0)
             {
-                return 0;   // 71 <arg_list_tail> := , <expression> <arg_list_tail>
+                return 0;   // <arg_list_tail> := , <expression> <arg_list_tail>
             }
             else
             {
                 while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
                 syntaxProcess.push_back(PROCESS_ARG_LIST_TAIL_2);
                 scanner.setIndex(ori_index);
-                return 0;   // 72 <arg_list_tail> := <empty>
+                return 0;   // <arg_list_tail> := <empty>
             }
         }
         else
@@ -2277,7 +2329,7 @@ int Syntax::arg_list_tail()
             while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
             syntaxProcess.push_back(PROCESS_ARG_LIST_TAIL_2);
             scanner.setIndex(ori_index);
-            return 0;   // 72 <arg_list_tail> := <empty>
+            return 0;   // <arg_list_tail> := <empty>
         }
     }
     else
@@ -2285,6 +2337,172 @@ int Syntax::arg_list_tail()
         while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
         syntaxProcess.push_back(PROCESS_ARG_LIST_TAIL_2);
         scanner.setIndex(ori_index);
-        return 0;   // 72 <arg_list_tail> := <empty>
+        return 0;   // <arg_list_tail> := <empty>
+    }
+}
+
+int Syntax::input_stmt()
+{
+    #ifdef DEBUG
+    printf("----------input\n");
+    #endif
+    int res, ori_index, ori_process;
+    ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_INPUT_STMT);
+    Token temp = scanner.next();
+    if(temp.isKeyWord()&&temp.name == std::string("input"))
+    {
+        temp = scanner.next();
+        if(temp.isDelimiter()&&temp.name == std::string("("))
+        {
+            res = var();
+            if(res == 0)
+            {
+                //exIn();
+                temp = scanner.next();
+                if(temp.isDelimiter()&&temp.name == std::string(")"))
+                {
+                    temp = scanner.next();
+                    if(temp.isDelimiter()&&temp.name == std::string(";"))
+                    {
+                        return 0;   // <input_stmt> := input ( <var> )
+                    }
+                    else
+                    {
+                        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                        if(scanner.curIndex - 1 > errPos)
+                        {
+                            errPos = scanner.curIndex - 1;
+                            errMessage = "Error! Need ; before ";
+                        }
+                        scanner.setIndex(ori_index);
+                        return -1;
+                    }
+                }
+                else
+                {
+                    while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                    if(scanner.curIndex - 1 > errPos)
+                    {
+                        errPos = scanner.curIndex - 1;
+                        errMessage = "Error! Need ) before ";
+                    }
+                    scanner.setIndex(ori_index);
+                    return -1;
+                }
+            }
+            else
+            {
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                scanner.setIndex(ori_index);
+                return res;
+            }
+        }
+        else
+        {
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            if(scanner.curIndex - 1 > errPos)
+            {
+                errPos = scanner.curIndex - 1;
+                errMessage = "Error! Need ( before ";
+            }
+            scanner.setIndex(ori_index);
+            return -1;
+        }
+    }
+    else
+    {
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        if(scanner.curIndex - 1 > errPos)
+        {
+            errPos = scanner.curIndex - 1;
+            errMessage = "Error! Need input before ";
+        }
+        scanner.setIndex(ori_index);
+        return -1;
+    }
+}
+
+int Syntax::output_stmt()
+{
+    #ifdef DEBUG
+    printf("----------output\n");
+    #endif
+    int res, ori_index, ori_process;
+    ori_index = scanner.curIndex;
+    ori_process = syntaxProcess.size();
+    syntaxProcess.push_back(PROCESS_OUTPUT_STMT);
+    Token temp = scanner.next();
+    if(temp.isKeyWord()&&temp.name == std::string("output"))
+    {
+        temp = scanner.next();
+        if(temp.isDelimiter()&&temp.name == std::string("("))
+        {
+            res = var();
+            if(res == 0)
+            {
+                //exOut();
+                temp = scanner.next();
+                if(temp.isDelimiter()&&temp.name == std::string(")"))
+                {
+                    temp = scanner.next();
+                    if(temp.isDelimiter()&&temp.name == std::string(";"))
+                    {
+                        return 0;   // <output_stmt> := output ( <var> ) ;
+                    }
+                    else
+                    {
+                        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                        if(scanner.curIndex - 1 > errPos)
+                        {
+                            errPos = scanner.curIndex - 1;
+                            errMessage = "Error! Need ; before ";
+                        }
+                        scanner.setIndex(ori_index);
+                        return -1;
+                    }
+                }
+                else
+                {
+                    while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                    if(scanner.curIndex - 1 > errPos)
+                    {
+                        errPos = scanner.curIndex - 1;
+                        errMessage = "Error! Need ) before ";
+                    }
+                    scanner.setIndex(ori_index);
+                    return -1;
+                }
+            }
+            else
+            {
+                while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+                scanner.setIndex(ori_index);
+                return res;
+            }
+        }
+        else
+        {
+            while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+            if(scanner.curIndex - 1 > errPos)
+            {
+                errPos = scanner.curIndex - 1;
+                errMessage = "Error! Need ( before ";
+            }
+            scanner.setIndex(ori_index);
+            return -1;
+        }
+    }
+    else
+    {
+        while((int)syntaxProcess.size() > ori_process) syntaxProcess.pop_back();
+        if(scanner.curIndex - 1 > errPos)
+        {
+            errPos = scanner.curIndex - 1;
+            errMessage = "Error! Need output before ";
+        }
+        scanner.setIndex(ori_index);
+        return -1;
     }
 }

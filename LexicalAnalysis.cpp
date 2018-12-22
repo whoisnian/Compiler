@@ -146,13 +146,15 @@ void Scan::initFrom(std::string plainText)
 
 void Scan::initTable()
 {
-    numberOfKeyWord = 6;
+    numberOfKeyWord = 8;
     keyWordTable[0] = std::string("else");
     keyWordTable[1] = std::string("if");
     keyWordTable[2] = std::string("int");
     keyWordTable[3] = std::string("return");
     keyWordTable[4] = std::string("void");
     keyWordTable[5] = std::string("while");
+    keyWordTable[6] = std::string("input");
+    keyWordTable[7] = std::string("output");
 
     numberOfDelimiter = 20;
     delimiterTable[0] = std::string("+");

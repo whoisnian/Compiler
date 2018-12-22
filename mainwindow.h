@@ -52,6 +52,8 @@ const char synText[100][100] = {
 "<statement> := <selection_stmt>",
 "<statement> := <iteration_stmt>",
 "<statement> := <return_stmt>",
+"<statement> := <input_stmt>",
+"<statement> := <output_stmt>",
 "<expression_stmt> := <expression> ;",
 "<expression_stmt> := ;",
 "<selection_stmt> := if ( <expression> ) <statement>",
@@ -92,6 +94,8 @@ const char synText[100][100] = {
 "<arg_list> := <expression> <arg_list_tail>",
 "<arg_list_tail> := , <expression> <arg_list_tail>",
 "<arg_list_tail> := <empty>",
+"<input_stmt> := input ( <var> ) ;",
+"<output_stmt> := output ( <var> ) ;",
 };
 
 class MainWindow : public QMainWindow

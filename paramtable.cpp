@@ -28,9 +28,9 @@ void ParamTable::initAll()
     table_pfinf.clear();
     table_cons.clear();
     table_ainf.clear();
-    beginidx_id_tmp=100;
+    beginidx_id_tmp = 100;
     id_tmp = beginidx_id_tmp; //临时变量的开始值，正常变量数大于100时需要修改这个值
-    memset(inalNums,0,sizeof(inalNums));
+    memset(inalNums, 0, sizeof(inalNums));
 }
 void ParamTable::addFun(int id)
 {
@@ -127,7 +127,7 @@ void ParamTable::addArray(int id, int len, bool isparam)
         for (int i = 1; i <= len; i++)
         {
             addNum(id_tmp);
-            inalNums[id_tmp]=1;
+            inalNums[id_tmp] = 1;
             id_tmp++;
         }
     }
@@ -194,7 +194,7 @@ void ParamTable::alGeq(string op)
     {
         if (diffid1 != -1)
         {
-        pfinf[Funcs.top()].elems.push_back(elems.size());
+            pfinf[Funcs.top()].elems.push_back(elems.size());
             elems.push_back(elem("arr1", -1, -1, diffid1));
         }
         if (diffid2 != -1)
@@ -210,7 +210,7 @@ void ParamTable::alGeq(string op)
     {
         if (diffid2 != -1)
         {
-        pfinf[Funcs.top()].elems.push_back(elems.size());
+            pfinf[Funcs.top()].elems.push_back(elems.size());
             elems.push_back(elem("arr1", -1, -1, diffid2));
         }
         if (diffid1 != -1)
@@ -219,15 +219,15 @@ void ParamTable::alGeq(string op)
             elems.push_back(elem("arr2", -1, -1, diffid1));
         }
         pfinf[Funcs.top()].elems.push_back(elems.size());
-        if(min(id1,id2)>=beginidx_id_tmp)//减少临时变量开销
-            id_tmp=min(id1,id2);
-        else if(max(id1,id2)>=beginidx_id_tmp)
-            id_tmp=max(id1,id2);
-        else
-        addNum(id_tmp);
+        //if (min(id1, id2) >= beginidx_id_tmp) //减少临时变量开销
+        //    id_tmp = min(id1, id2);
+        //else if (max(id1, id2) >= beginidx_id_tmp)
+        //    id_tmp = max(id1, id2);
+        //else
+            addNum(id_tmp);
         elems.push_back(elem(op, id2, id1, id_tmp));
         alNums.push(id_tmp);
-        inalNums[id_tmp]=1;
+        inalNums[id_tmp] = 1;
 #ifdef DEBUG
         cout << "push " << alNums.top() << endl;
 #endif
@@ -334,6 +334,40 @@ void ParamTable::exWe()
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("we", -1, -1, -1));
 }
+void ParamTable::exIn()
+{
+#ifdef DEBUG
+    cout << "exIn" << endl;
+#endif
+    int id0, diffid0 = -1;
+    pfinf[Funcs.top()].elems.push_back(elems.size());
+    id0 = alNums.top();
+    alNums.pop();
+    if (table_ainf.count(id0))
+    {
+        diffid0 = alNums.top();
+        alNums.pop();
+        id0 = ainf[synb[table_ainf[id0]].addr].low;
+    }
+    elems.push_back(elem("in", diffid0, -1, id0));
+}
+void ParamTable::exOut()
+{
+#ifdef DEBUG
+    cout << "exOut" << endl;
+#endif
+    int id0, diffid0 = -1;
+    pfinf[Funcs.top()].elems.push_back(elems.size());
+    id0 = alNums.top();
+    alNums.pop();
+    if (table_ainf.count(id0))
+    {
+        diffid0 = alNums.top();
+        alNums.pop();
+        id0 = ainf[synb[table_ainf[id0]].addr].low;
+    }
+    elems.push_back(elem("out", diffid0, -1, id0));
+}
 void ParamTable::callBegin(int id)
 {
 #ifdef DEBUG
@@ -356,7 +390,7 @@ void ParamTable::callBegin(int id)
     elems.push_back(elem("call", id, id_tmp, -1));
     addNum(id_tmp);
     alNums.push(id_tmp);
-    inalNums[id_tmp]=1;
+    inalNums[id_tmp] = 1;
     id_tmp++;
 }
 void ParamTable::callEnd()
@@ -412,13 +446,24 @@ void ParamTable::callParam()
 #endif
         return;
     }
-    int id1;
+    int id1, diffid1 = -1;
     id1 = alNums.top();
     alNums.pop();
+    if (table_ainf.count(id1))
+    {
+        diffid1 = alNums.top();
+        alNums.pop();
+        id1 = ainf[synb[table_ainf[id1]].addr].low;
+    }
     int num;
     num = callParams.top();
     callParams.pop();
     callParams.push(++num);
+    if(diffid1!=-1)
+    {
+        pfinf[Funcs.top()].elems.push_back(elems.size());
+        elems.push_back(elem("arr1", -1, -1, diffid1));
+    }
     pfinf[Funcs.top()].elems.push_back(elems.size());
     elems.push_back(elem("params", -1, -1, id1));
 }
@@ -462,7 +507,7 @@ void ParamTable::genValls() //生成活动记录表
             {
                 sum += 2 * (ainf[synb[pfinf[k].synbs[i]].addr].up - ainf[synb[pfinf[k].synbs[i]].addr].low);
             }*/
-            }
+        }
         nowvall.size = sum;
         basicValls.push_back(nowvall);
     }
@@ -513,20 +558,20 @@ void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位�
         }
     }
     vector<int> tmpelems;
-    int iscons[1000],used[1000],lastmodify[1000];//是否现在是常数/是否被使用了（否则就是垃圾语句）/上次修改位置
-    map<pair<int,int>,pair<int,int> > oldtonew;//<id1,id2>-><id0,location>
-    map<int,pair<int,int> >newtoold;
+    int iscons[1000], used[1000], lastmodify[1000]; //是否现在是常数/是否被使用了（否则就是垃圾语句）/上次修改位置
+    map<pair<int, int>, pair<int, int>> oldtonew;   //<id1,id2>-><id0,location>
+    map<int, pair<int, int>> newtoold;
     elem tmpelem("", -1, -1, -1);
     int piecel, piecer, l, r, num;
-    for (k = 1; k < pfinf.size(); k++)//常数表达式优化(含常数推进)
+    for (k = 1; k < pfinf.size(); k++) //常数表达式优化(含常数推进)
     {
-        memset(iscons,255,sizeof(iscons));
+        memset(iscons, 255, sizeof(iscons));
         for (i = 0; i < pfinf[k].elems.size(); i++)
         {
             tmpelem = elems[pfinf[k].elems[i]];
             if (tmpelem.iscntop())
             {
-                if ((table_cons.count(tmpelem.id1) || iscons[tmpelem.id1] != -1) && (table_cons.count(tmpelem.id2) || iscons[tmpelem.id2] != -1)) 
+                if ((table_cons.count(tmpelem.id1) || iscons[tmpelem.id1] != -1) && (table_cons.count(tmpelem.id2) || iscons[tmpelem.id2] != -1))
                 {
                     if (iscons[tmpelem.id1] != -1)
                         l = iscons[tmpelem.id1];
@@ -547,85 +592,138 @@ void ParamTable::gen4elem() //处理四元式的if，while等语句的跳转位�
                     elems[pfinf[k].elems[i]] = elem("=", id_tmp, -1, tmpelem.id0);
                     addCon(id_tmp, num);
                     id_tmp++;
-                    iscons[tmpelem.id0]=num;
-                }else  
-                    iscons[tmpelem.id0]=-1;
-            }else
+                    iscons[tmpelem.id0] = num;
+                }
+                else
+                    iscons[tmpelem.id0] = -1;
+            }
+            else
             {
-                if(tmpelem.st=="=")
+                if (tmpelem.st == "=")
                 {
-                    if(table_cons.count(tmpelem.id1)||iscons[tmpelem.id1]!=-1)
+                    if (table_cons.count(tmpelem.id1) || iscons[tmpelem.id1] != -1)
                     {
                         if (iscons[tmpelem.id1] != -1)
                             l = iscons[tmpelem.id1];
                         else
                             l = table_cons[tmpelem.id1];
-                        iscons[tmpelem.id0]=l;
-                    }else
+                        iscons[tmpelem.id0] = l;
+                    }
+                    else
                     {
-                        iscons[tmpelem.id0]=-1;
+                        iscons[tmpelem.id0] = -1;
+                    }
+                }
+                else
+                    memset(iscons, 255, sizeof(iscons));
+            }
         }
-                }else
-                    memset(iscons,255,sizeof(iscons));               
     }
-        }
-    }
-    for (k = 1; k < pfinf.size(); k++)//dag优化
+    for (k = 1; k < pfinf.size(); k++) //dag优化
     {
-        memset(used,255,sizeof(used));
-        memset(lastmodify,255,sizeof(lastmodify));
+        memset(used, 255, sizeof(used));
+        memset(lastmodify, 255, sizeof(lastmodify));
         oldtonew.clear();
         newtoold.clear();
         for (i = 0; i < pfinf[k].elems.size(); i++)
         {
             tmpelem = elems[pfinf[k].elems[i]];
-            if (tmpelem.iscntop()||tmpelem.st=="="||tmpelem.st=="arr1"||tmpelem.st=="arr2")
-            {        
-                if(tmpelem.iscntop())
-                {
-                    if(tmpelem.id1!=tmpelem.id0&&tmpelem.id2!=tmpelem.id0&&lastmodify[tmpelem.id0]!=-1&&used[tmpelem.id0]<lastmodify[tmpelem.id0])//如果上次修改后到现在未使用过，删除上次对应的四元式
-                    {
-                        elems[pfinf[k].elems[lastmodify[tmpelem.id0]]] = elem("deleted",-1 , -1, tmpelem.id0);
-                        oldtonew.erase(make_pair(tmpelem.id1,tmpelem.id2));
-                        if(tmpelem.st=="+"||tmpelem.st=="*")
-                            oldtonew.erase(make_pair(tmpelem.id2,tmpelem.id1));
-                    }
-                    if(oldtonew.count(make_pair(tmpelem.id1,tmpelem.id2)))//之前有过同样的表达式且目标变量未改变过时直接复用
-                    {
-                        int location=oldtonew[make_pair(tmpelem.id1,tmpelem.id2)].second;
-                        int newid=oldtonew[make_pair(tmpelem.id1,tmpelem.id2)].first;
-                        if(location>lastmodify[tmpelem.id1]&&location>lastmodify[tmpelem.id2])
-                        {
-                            elems[pfinf[k].elems[i]] = elem("=",newid , -1, tmpelem.id0);
-                            used[newid]=i;
-                            lastmodify[tmpelem.id0]=i;
-                        }
-                    }else
-                    {
-                        used[tmpelem.id1]=used[tmpelem.id2]=i;
-                        lastmodify[tmpelem.id0]=i;
-                        oldtonew.insert(make_pair(make_pair(tmpelem.id1,tmpelem.id2),make_pair(tmpelem.id0,i)));
-                        if(tmpelem.st=="+"||tmpelem.st=="*")
-                            oldtonew.insert(make_pair(make_pair(tmpelem.id2,tmpelem.id1),make_pair(tmpelem.id0,i)));
-                    }
-                }else if(tmpelem.st=="=")
-                {
-                    if(lastmodify[tmpelem.id0]!=-1&&used[tmpelem.id0]<lastmodify[tmpelem.id0])//如果上次修改后到现在未使用过，删除上次对应的四元式
-                    {
-                        elems[pfinf[k].elems[lastmodify[tmpelem.id0]]] = elem("deleted",tmpelem.id1 , -1, tmpelem.id0);
-                    }
-                    used[tmpelem.id1]=i;
-                    lastmodify[tmpelem.id0]=i;
-                }else
-                {
-                    used[tmpelem.id0]=i;
-                }
-            }else
+            if (tmpelem.iscntop() || tmpelem.st == "=" || tmpelem.st == "arr1" || tmpelem.st == "arr2")
             {
-                memset(used,255,sizeof(used));
-                memset(lastmodify,255,sizeof(lastmodify));
+                if (tmpelem.iscntop())
+                {
+                    if (tmpelem.id1 != tmpelem.id0 && tmpelem.id2 != tmpelem.id0 && lastmodify[tmpelem.id0] != -1 && used[tmpelem.id0] < lastmodify[tmpelem.id0]) //如果上次修改后到现在未使用过，删除上次对应的四元式
+                    {
+                        elems[pfinf[k].elems[lastmodify[tmpelem.id0]]] = elem("deleted", -1, -1, tmpelem.id0);
+                        oldtonew.erase(make_pair(tmpelem.id1, tmpelem.id2));
+                        if (tmpelem.st == "+" || tmpelem.st == "*")
+                            oldtonew.erase(make_pair(tmpelem.id2, tmpelem.id1));
+                    }
+                    if (oldtonew.count(make_pair(tmpelem.id1, tmpelem.id2))) //之前有过同样的表达式且目标变量未改变过时直接复用
+                    {
+                        int location = oldtonew[make_pair(tmpelem.id1, tmpelem.id2)].second;
+                        int newid = oldtonew[make_pair(tmpelem.id1, tmpelem.id2)].first;
+                        if (location > lastmodify[tmpelem.id1] && location > lastmodify[tmpelem.id2])
+                        {
+                            elems[pfinf[k].elems[i]] = elem("=", newid, -1, tmpelem.id0);
+                            used[newid] = i;
+                            lastmodify[tmpelem.id0] = i;
+                        }
+                    }
+                    else
+                    {
+                        used[tmpelem.id1] = used[tmpelem.id2] = i;
+                        lastmodify[tmpelem.id0] = i;
+                        oldtonew.insert(make_pair(make_pair(tmpelem.id1, tmpelem.id2), make_pair(tmpelem.id0, i)));
+                        if (tmpelem.st == "+" || tmpelem.st == "*")
+                            oldtonew.insert(make_pair(make_pair(tmpelem.id2, tmpelem.id1), make_pair(tmpelem.id0, i)));
+                    }
+                }
+                else if (tmpelem.st == "=")
+                {
+                    if (lastmodify[tmpelem.id0] != -1 && used[tmpelem.id0] < lastmodify[tmpelem.id0]) //如果上次修改后到现在未使用过，删除上次对应的四元式
+                    {
+                        elems[pfinf[k].elems[lastmodify[tmpelem.id0]]] = elem("deleted", tmpelem.id1, -1, tmpelem.id0);
+                    }
+                    used[tmpelem.id1] = i;
+                    lastmodify[tmpelem.id0] = i;
+                }
+                else
+                {
+                    used[tmpelem.id0] = i;
+                }
+            }
+            else
+            {
+                memset(used, 255, sizeof(used));
+                memset(lastmodify, 255, sizeof(lastmodify));
                 oldtonew.clear();
                 newtoold.clear();
+            }
+        }
+    }
+    int idx;
+    for (i = 0; i < elems.size(); i++) //初始化活跃信息表
+    {
+        qt[0].push_back(true);
+        qt[1].push_back(true);
+        qt[2].push_back(true);
+    }
+    for (k = 1; k < pfinf.size(); k++) //计算活跃信息
+    {
+        for (i = 0; i < pfinf[k].elems.size(); i++)
+        {
+            tmpelem = elems[pfinf[k].elems[i]];
+            idx = pfinf[k].elems[i];
+            if (tmpelem.iscntop() || tmpelem.st == "=" || tmpelem.st == "arr1" || tmpelem.st == "arr2")
+            {
+                if (tmpelem.iscntop())
+                {
+                    qt[0][idx] = symbl[tmpelem.id0];
+                    symbl[tmpelem.id0] = false;
+                    qt[1][idx] = symbl[tmpelem.id1];
+                    symbl[tmpelem.id1] = true;
+                    qt[2][idx] = symbl[tmpelem.id2];
+                    symbl[tmpelem.id2] = true;
+                }
+                else if (tmpelem.st == "=")
+                {
+                    qt[0][idx] = symbl[tmpelem.id0];
+                    symbl[tmpelem.id0] = false;
+                    qt[1][idx] = symbl[tmpelem.id1];
+                    symbl[tmpelem.id1] = true;
+                }
+                else
+                {
+                    qt[0][idx] = symbl[tmpelem.id0];
+                    symbl[tmpelem.id0] = true;
+                }
+            }
+            else
+            {
+                memset(symbl, 0, sizeof(symbl));
+                for (j = 0; j < 100; j++)
+                    symbl[i] = true;
             }
         }
     }
@@ -688,6 +786,17 @@ void ParamTable::outputParam()
 }
 void ParamTable::toax(int k, int id, int diffid) //输出到从内存提取到ax的汇编指令
 {
+    if (locra == id && locradiff == diffid) //考虑要找的数据已经在寄存器的情况
+        return;
+    if (locrc == id && locrcdiff == diffid)
+    {
+        locra = id;
+        locradiff = diffid;
+        assemblyRes.push_back("MOV   AX,CX");
+        return;
+    }
+    locra = id;
+    locradiff = diffid;
     if (table_cons.count(id)) //为常数
     {
         //cout << "MOV   AX," << table_cons[id] << endl;
@@ -698,7 +807,7 @@ void ParamTable::toax(int k, int id, int diffid) //输出到从内存提取到ax
         id = basicValls[k].var[id];
         if (diffid == -1)
             //cout << "MOV   AX,[BP-" << id + 2 << "]" << endl;
-            assemblyRes.push_back("MOV   AX,[BP-" + to_string(id+2) + "]");
+            assemblyRes.push_back("MOV   AX,[BP-" + to_string(id + 2) + "]");
         else //为数组，考虑偏移量是否是全局变量
         {
             if (table_cons.count(diffid))
@@ -716,14 +825,14 @@ void ParamTable::toax(int k, int id, int diffid) //输出到从内存提取到ax
             {
                 diffid = basicValls[k].var[diffid];
                 //cout << "MOV   SI,[BP-" << diffid + 2 << "]" << endl;
-                assemblyRes.push_back("MOV   SI,[BP-" + to_string(diffid+2) + "]");
+                assemblyRes.push_back("MOV   SI,[BP-" + to_string(diffid + 2) + "]");
             }
             //cout << "SHL   SI,1" << endl;
             //cout << "NEG   SI" << endl;
             //cout << "MOV   AX,[BP+SI-" << id + 2 << "]" << endl;
             assemblyRes.push_back("SHL   SI,1");
             assemblyRes.push_back("NEG   SI");
-            assemblyRes.push_back("MOV   AX,[BP+SI-" + to_string(id+2) + "]");
+            assemblyRes.push_back("MOV   AX,[BP+SI-" + to_string(id + 2) + "]");
         }
     }
     else
@@ -749,7 +858,7 @@ void ParamTable::toax(int k, int id, int diffid) //输出到从内存提取到ax
             {
                 diffid = basicValls[k].var[diffid];
                 //cout << "MOV   DI,[BP-" << diffid + 2 << "]" << endl;
-                assemblyRes.push_back("MOV   DI,[BP-" + to_string(diffid+2) + "]");
+                assemblyRes.push_back("MOV   DI,[BP-" + to_string(diffid + 2) + "]");
             }
             //cout << "SHL   DI,1" << endl;
             //cout << "MOV   AX,[BX+DI+" << id << "]" << endl;
@@ -760,6 +869,17 @@ void ParamTable::toax(int k, int id, int diffid) //输出到从内存提取到ax
 }
 void ParamTable::tocx(int k, int id, int diffid) //输出到从内存提取到ax的汇编指令
 {
+    if (locrc == id && locrcdiff == diffid) //考虑要找的数据已经在寄存器的情况
+        return;
+    if (locra == id && locradiff == diffid)
+    {
+        locrc = id;
+        locrcdiff = diffid;
+        assemblyRes.push_back("MOV   CX,AX");
+        return;
+    }
+    locrc = id;
+    locrcdiff = diffid;
     if (table_cons.count(id))
     {
         //cout << "MOV   CX," << table_cons[id] << endl;
@@ -770,7 +890,7 @@ void ParamTable::tocx(int k, int id, int diffid) //输出到从内存提取到ax
         id = basicValls[k].var[id];
         if (diffid == -1)
             //cout << "MOV   CX,[BP-" << id + 2 << "]" << endl;
-            assemblyRes.push_back("MOV   CX,[BP-" + to_string(id+2) + "]");
+            assemblyRes.push_back("MOV   CX,[BP-" + to_string(id + 2) + "]");
         else //为数组，考虑偏移量是否是全局变量
         {
             if (table_cons.count(diffid))
@@ -788,14 +908,14 @@ void ParamTable::tocx(int k, int id, int diffid) //输出到从内存提取到ax
             {
                 diffid = basicValls[k].var[diffid];
                 //cout << "MOV   SI,[BP-" << diffid + 2 << "]" << endl;
-                assemblyRes.push_back("MOV   SI,[BP-" + to_string(diffid+2) + "]");
+                assemblyRes.push_back("MOV   SI,[BP-" + to_string(diffid + 2) + "]");
             }
             //cout << "SHL   SI,1" << endl;
             //cout << "NEG   SI" << endl;
             //cout << "MOV   CX,[BP+SI-" << id + 2 << "]" << endl;
             assemblyRes.push_back("SHL   SI,1");
             assemblyRes.push_back("NEG   SI");
-            assemblyRes.push_back("MOV   CX,[BP+SI-" + to_string(id+2) + "]");
+            assemblyRes.push_back("MOV   CX,[BP+SI-" + to_string(id + 2) + "]");
         }
     }
     else
@@ -821,7 +941,7 @@ void ParamTable::tocx(int k, int id, int diffid) //输出到从内存提取到ax
             {
                 diffid = basicValls[k].var[diffid];
                 //cout << "MOV   DI,[BP-" << diffid + 2 << "]" << endl;
-                assemblyRes.push_back("MOV   DI,[BP-" + to_string(diffid+2) + "]");
+                assemblyRes.push_back("MOV   DI,[BP-" + to_string(diffid + 2) + "]");
             }
             //cout << "SHL   DI,1" << endl;
             //cout << "MOV   CX,[BX+DI+" << id << "]" << endl;
@@ -842,7 +962,7 @@ void ParamTable::axto(int k, int id, int diffid) //输出到从ax提取到内存
         id = basicValls[k].var[id];
         if (diffid == -1)
             //cout << "MOV   [BP-" << id + 2 << "],AX" << endl;
-            assemblyRes.push_back("MOV   [BP-" + to_string(id+2) + "],AX");
+            assemblyRes.push_back("MOV   [BP-" + to_string(id + 2) + "],AX");
         else //为数组，考虑偏移量是否是全局变量
         {
             if (table_cons.count(diffid))
@@ -860,14 +980,14 @@ void ParamTable::axto(int k, int id, int diffid) //输出到从ax提取到内存
             {
                 diffid = basicValls[k].var[diffid];
                 //cout << "MOV   SI,[BP-" << diffid + 2 << "]" << endl;
-                assemblyRes.push_back("MOV   SI,[BP-" + to_string(diffid+2) + "]");
+                assemblyRes.push_back("MOV   SI,[BP-" + to_string(diffid + 2) + "]");
             }
             //cout << "SHL   SI,1" << endl;
             //cout << "NEG   SI" << endl;
             //cout << "MOV   [BP+SI-" << id + 2 << "],AX" << endl;
             assemblyRes.push_back("SHL   SI,1");
             assemblyRes.push_back("NEG   SI");
-            assemblyRes.push_back("MOV   [BP+SI-" + to_string(id+2) + "],AX");
+            assemblyRes.push_back("MOV   [BP+SI-" + to_string(id + 2) + "],AX");
         }
     }
     else
@@ -893,7 +1013,7 @@ void ParamTable::axto(int k, int id, int diffid) //输出到从ax提取到内存
             {
                 diffid = basicValls[k].var[diffid];
                 //cout << "MOV   DI,[BP-" << diffid + 2 << "]" << endl;
-                assemblyRes.push_back("MOV   DI,[BP-" + to_string(diffid+2) + "]");
+                assemblyRes.push_back("MOV   DI,[BP-" + to_string(diffid + 2) + "]");
             }
             //cout << "SHL   DI,1" << endl;
             //cout << "MOV   [BX+DI+" << id << "],AX" << endl;
@@ -961,8 +1081,58 @@ void ParamTable::genAssembly()
     assemblyRes.push_back("DSEG  ENDS");
     assemblyRes.push_back("CSEG  SEGMENT");
     assemblyRes.push_back("      ASSUME  SS:SSEG,CS:CSEG,DS:DSEG");
+    // 输入输出子程序
+    assemblyRes.push_back("INFUN  PROC NEAR");
+    assemblyRes.push_back("PUSH  BX");
+    assemblyRes.push_back("PUSH  CX");
+    assemblyRes.push_back("MOV   DX,0");
+    assemblyRes.push_back("MOV   CX,0");
+    assemblyRes.push_back("INFUN1:MOV	  AH,01H");
+    assemblyRes.push_back("INT   21H");
+    assemblyRes.push_back("CMP   AL,48");
+    assemblyRes.push_back("JB    INFUN2");
+    assemblyRes.push_back("SUB   AL,48");
+    assemblyRes.push_back("MOV   CL,AL");
+    assemblyRes.push_back("MOV	  AX,DX");
+    assemblyRes.push_back("MOV   DX,10");
+    assemblyRes.push_back("MUL   DX");
+    assemblyRes.push_back("ADD   AX,CX");
+    assemblyRes.push_back("MOV   DX,AX");
+    assemblyRes.push_back("JMP   INFUN1");
+    assemblyRes.push_back("INFUN2:MOV   AX,DX");
+    assemblyRes.push_back("POP   CX");
+    assemblyRes.push_back("POP   BX");
+    assemblyRes.push_back("RET");
+    assemblyRes.push_back("INFUN  ENDP");
+    assemblyRes.push_back("OUTFUN PROC NEAR");
+    assemblyRes.push_back("PUSH  AX");
+    assemblyRes.push_back("PUSH  BX");
+    assemblyRes.push_back("PUSH  CX");
+    assemblyRes.push_back("MOV   BX,10");
+    assemblyRes.push_back("MOV   CX,0");
+    assemblyRes.push_back("OUTFUN1:MOV   DX,0");
+    assemblyRes.push_back("DIV   BX");
+    assemblyRes.push_back("ADD   DL,30H");
+    assemblyRes.push_back("PUSH  DX");
+    assemblyRes.push_back("INC   CX");
+    assemblyRes.push_back("AND   AX,AX");
+    assemblyRes.push_back("JZ    OUTFUN2");
+    assemblyRes.push_back("JMP   OUTFUN1");
+    assemblyRes.push_back("OUTFUN2:POP   DX");
+    assemblyRes.push_back("MOV   AH,02H");
+    assemblyRes.push_back("INT   21H");
+    assemblyRes.push_back("LOOP  OUTFUN2");
+    assemblyRes.push_back("MOV   DX,0AH");
+    assemblyRes.push_back("MOV   AH,02H");
+    assemblyRes.push_back("INT   21H");
+    assemblyRes.push_back("POP   CX");
+    assemblyRes.push_back("POP   BX");
+    assemblyRes.push_back("POP   AX");
+    assemblyRes.push_back("RET");
+    assemblyRes.push_back("OUTFUN ENDP");
     for (k = 1; k < pfinf.size(); k++)
     {
+        locra = locrc = locradiff = locrcdiff = -1;
         if (k != pfinf.size() - 1)
         {
             //cout << "FUN" << k << "  PROC NEAR" << endl;
@@ -973,7 +1143,7 @@ void ParamTable::genAssembly()
             //cout << "MOV   BP,SI" << endl;
             //cout << "PUSH  BP" << endl;
             assemblyRes.push_back("FUN" + to_string(k) + "  PROC NEAR");
-            assemblyRes.push_back("MOV   CX," + to_string((basicValls[k].size-basicValls[k].parsize-2)/2));
+            assemblyRes.push_back("MOV   CX," + to_string((basicValls[k].size - basicValls[k].parsize - 2) / 2));
             assemblyRes.push_back("F" + to_string(k) + "IN: NOP");
             assemblyRes.push_back("PUSH  AX");
             assemblyRes.push_back("LOOP  F" + to_string(k) + "IN");
@@ -1001,7 +1171,7 @@ void ParamTable::genAssembly()
             assemblyRes.push_back("MOV   BP,SP");
             assemblyRes.push_back("MOV   BX,OFFSET MAINV");
             assemblyRes.push_back("MOV   AX,0");
-            assemblyRes.push_back("MOV   CX," + to_string(basicValls[k].size/2));
+            assemblyRes.push_back("MOV   CX," + to_string(basicValls[k].size / 2));
             assemblyRes.push_back("F" + to_string(k) + "IN: NOP");
             assemblyRes.push_back("PUSH  AX");
             assemblyRes.push_back("LOOP  F" + to_string(k) + "IN");
@@ -1025,17 +1195,20 @@ void ParamTable::genAssembly()
                 assemblyRes.push_back("F" + to_string(k) + "T" + to_string(pfinf[k].elems[i]) + ": NOP");
             if (tmpelem.st == "=")
             {
-
-                toax(k, tmpelem.id1, diffid1);
-                diffid1 = -1;
+#ifdef DEBUG
+                cout << tmpelem.id1 << ' ' << locra << ' ' << diffid1 << ' ' << locradiff << endl;
+#endif
+                if (!(tmpelem.id1 == locra && diffid1 == locradiff))
+                    toax(k, tmpelem.id1, diffid1);
                 axto(k, tmpelem.id0, diffid2);
+                diffid1 = -1;
                 diffid2 = -1;
             }
             else if (tmpelem.iscntop())
             {
                 toax(k, tmpelem.id1, diffid1);
-                diffid1 = -1;
                 tocx(k, tmpelem.id2, diffid2);
+                diffid1 = -1;
                 diffid2 = -1;
                 if (tmpelem.st == "+")
                 {
@@ -1066,6 +1239,8 @@ void ParamTable::genAssembly()
                     assemblyRes.push_back("DIV   CX");
                     assemblyRes.push_back("MOV   AX,DX");
                 }
+                locra = tmpelem.id0;
+                locradiff = -1;
                 axto(k, tmpelem.id0);
             }
             else if (tmpelem.isjugop())
@@ -1090,27 +1265,33 @@ void ParamTable::genAssembly()
                 toax(k, tmpelem.id1);
                 //cout << "CMP   AX,0" << endl;
                 assemblyRes.push_back("CMP   AX,0");
+                locra = locrc = locradiff = locrcdiff = -1;
                 jgjp(k, "==", tmpelem.id0);
             }
             else if (tmpelem.st == "ie")
             {
+                locra = locrc = locradiff = locrcdiff = -1;
             }
             else if (tmpelem.st == "el")
             {
+                locra = locrc = locradiff = locrcdiff = -1;
                 jgjp(k, "jmp", tmpelem.id0);
             }
             else if (tmpelem.st == "wh")
             {
+                locra = locrc = locradiff = locrcdiff = -1;
             }
             else if (tmpelem.st == "do")
             {
                 toax(k, tmpelem.id1);
                 //cout << "CMP   AX,0" << endl;
+                locra = locrc = locradiff = locrcdiff = -1;
                 assemblyRes.push_back("CMP   AX,0");
                 jgjp(k, "==", tmpelem.id0);
             }
             else if (tmpelem.st == "we")
             {
+                locra = locrc = locradiff = locrcdiff = -1;
                 jgjp(k, "jmp", tmpelem.id0);
             }
             else if (tmpelem.st == "call")
@@ -1120,10 +1301,12 @@ void ParamTable::genAssembly()
                 tmp = table_pfinf[tmpelem.id1];
                 tmp = synb[tmp].addr;
                 tmpsynb = tmpelem.id2;
+
             }
             else if (tmpelem.st == "params")
             {
-                toax(k, tmpelem.id0);
+                toax(k, tmpelem.id0, diffid1);
+                diffid1 = -1;
                 //cout << "PUSH  AX" << endl;
                 assemblyRes.push_back("PUSH  AX");
             }
@@ -1131,6 +1314,7 @@ void ParamTable::genAssembly()
             {
                 //cout << "CALL  FUN" << tmp << endl;
                 //cout << "POP   AX" << endl;
+                locra = locrc = locradiff = locradiff = -1;
                 assemblyRes.push_back("CALL  FUN" + to_string(tmp));
                 assemblyRes.push_back("POP   AX");
                 axto(k, tmpsynb);
@@ -1174,6 +1358,19 @@ void ParamTable::genAssembly()
             {
                 diffid2 = tmpelem.id0;
             }
+            else if (tmpelem.st == "in")
+            {
+                assemblyRes.push_back("CALL INFUN");
+                locra = locradiff = -1;
+                axto(k, tmpelem.id0, tmpelem.id1);
+                locra = tmpelem.id0;
+                locradiff = tmpelem.id1;
+            }
+            else if (tmpelem.st == "out")
+            {
+                toax(k, tmpelem.id0, tmpelem.id1);
+                assemblyRes.push_back("CALL OUTFUN");
+            }
         }
         if (k != pfinf.size() - 1)
         {
@@ -1194,12 +1391,12 @@ void ParamTable::genAssembly()
             //cout << "RET" << endl;
             //cout << "FUN" << k << "  ENDP" << endl;
             assemblyRes.push_back("F" + to_string(k) + "O:  NOP");
-            assemblyRes.push_back("MOV   CX," + to_string((basicValls[k].size-basicValls[k].parsize)/2));
+            assemblyRes.push_back("MOV   CX," + to_string((basicValls[k].size - basicValls[k].parsize) / 2));
             assemblyRes.push_back("F" + to_string(k) + "O1:NOP");
             assemblyRes.push_back("POP   DX");
             assemblyRes.push_back("LOOP  F" + to_string(k) + "O1");
             assemblyRes.push_back("POP   SI");
-            assemblyRes.push_back("MOV   CX," + to_string(basicValls[k].parsize/2));
+            assemblyRes.push_back("MOV   CX," + to_string(basicValls[k].parsize / 2));
             assemblyRes.push_back("F" + to_string(k) + "O2:NOP");
             assemblyRes.push_back("POP   DX");
             assemblyRes.push_back("LOOP  F" + to_string(k) + "O2");
@@ -1221,6 +1418,7 @@ void ParamTable::genAssembly()
             assemblyRes.push_back("CSEG  ENDS");
             assemblyRes.push_back("      END   START");
         }
+        locra = locrc = locradiff = locrcdiff = -1;
     }
     valls.clear();
 }
@@ -1228,7 +1426,7 @@ void ParamTable::genAssembly()
 void ParamTable::outputAssembly()
 {
     cout << "outputAssembly now" << endl;
-    for(int i = 0;i < assemblyRes.size();i++)
+    for (int i = 0; i < assemblyRes.size(); i++)
     {
         cout << assemblyRes.at(i) << endl;
     }
