@@ -13,6 +13,7 @@
 #include <QHeaderView>
 #include <QTextStream>
 #include <QTableWidget>
+#include <QTableWidgetItem>
 #include "codeeditor.h"
 #include "codehighlighter.h"
 #include "LexicalAnalysis.h"
@@ -109,6 +110,8 @@ public:
 public slots:
     void about();
     void showSynText();
+    void showKeyWord();
+    void showDelimiter();
     void newFile();
     void openFile();
     void saveFile();
@@ -116,10 +119,12 @@ public slots:
     void documentWasModified();
     void runLexical();
     void runSyntactic();
-    void show4Elem();
     void showParamTable();
+    void showVall();
+    void show4Elem();
     void runCompile();
     void runRun();
+    void showItem(QTableWidgetItem *);
 
 private:
     void setupMenuAndToolBar();

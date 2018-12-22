@@ -99,9 +99,9 @@ void CodeHighlighter::highlightBlock(const QString &text)
         if(scanner->tokens.at(i).type == TOKEN_TYPE_COMMENT)
             tempFormat.setToolTip(QString(tokenTypeName[scanner->tokens.at(i).type].c_str()));
         else if(scanner->tokens.at(i).isIdentifier()||scanner->tokens.at(i).isInt())
-            tempFormat.setToolTip(QString(("<b>" + scanner->tokens.at(i).name + "</b><br/>编号：" + std::to_string(scanner->tokens.at(i).identifierAndIntPos) + "<br/>类型：" + tokenTypeName[scanner->tokens.at(i).type]).c_str()));
+            tempFormat.setToolTip(QString(("<b>" + scanner->tokens.at(i).name + "</b><br/>位置：" + std::to_string(scanner->tokens.at(i).identifierAndIntPos) + "<br/>类型：" + tokenTypeName[scanner->tokens.at(i).type]).c_str()));
         else
-            tempFormat.setToolTip(QString(("<b>" + scanner->tokens.at(i).name + "</b><br/>编号：" + std::to_string(scanner->tokens.at(i).pos) + "<br/>类型：" + tokenTypeName[scanner->tokens.at(i).type]).c_str()));
+            tempFormat.setToolTip(QString(("<b>" + scanner->tokens.at(i).name + "</b><br/>位置：" + std::to_string(scanner->tokens.at(i).pos) + "<br/>类型：" + tokenTypeName[scanner->tokens.at(i).type]).c_str()));
         setFormat(stpos, len, tempFormat);
     }
 }

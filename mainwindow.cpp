@@ -31,13 +31,15 @@ void MainWindow::about()
 
 void MainWindow::showSynText()
 {
-    QTableWidget *table = new QTableWidget(72, 2, nullptr);
-    for(int i = 0;i < 72;i++)
+    QTableWidget *table = new QTableWidget(76, 2, nullptr);
+    for(int i = 0;i < 76;i++)
     {
         table->setItem(i, 0, new QTableWidgetItem(std::to_string(i+1).c_str()));
         table->setItem(i, 1, new QTableWidgetItem(synText[i+1]));
     }
-    table->horizontalHeader()->hide();
+    table->setHorizontalHeaderItem(0, new QTableWidgetItem("编号"));
+    table->setHorizontalHeaderItem(1, new QTableWidgetItem("产生式"));
+    //table->horizontalHeader()->hide();
     table->verticalHeader()->hide();
     table->horizontalHeader()->setStretchLastSection(true);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -45,6 +47,52 @@ void MainWindow::showSynText()
     table->resize(900, 594);
     table->setWindowIcon(QIcon::fromTheme("view-calendar-list"));
     table->setWindowTitle("文法支持");
+    table->setWordWrap(false);
+    table->resizeColumnsToContents();
+    table->show();
+    return;
+}
+
+void MainWindow::showKeyWord()
+{
+    Scan scanner;
+    QTableWidget *table = new QTableWidget(8, 2, nullptr);
+    for(int i = 0;i < 8;i++)
+    {
+        table->setItem(i, 0, new QTableWidgetItem(std::to_string(i).c_str()));
+        table->setItem(i, 1, new QTableWidgetItem(scanner.keyWordTable[i].c_str()));
+    }
+    table->horizontalHeader()->hide();
+    table->verticalHeader()->hide();
+    table->horizontalHeader()->setStretchLastSection(true);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->resize(300, 594);
+    table->setWindowIcon(QIcon::fromTheme("view-calendar-list"));
+    table->setWindowTitle("关键字表");
+    table->setWordWrap(false);
+    table->resizeColumnsToContents();
+    table->show();
+    return;
+}
+
+void MainWindow::showDelimiter()
+{
+    Scan scanner;
+    QTableWidget *table = new QTableWidget(20, 2, nullptr);
+    for(int i = 0;i < 20;i++)
+    {
+        table->setItem(i, 0, new QTableWidgetItem(std::to_string(i).c_str()));
+        table->setItem(i, 1, new QTableWidgetItem(scanner.delimiterTable[i].c_str()));
+    }
+    table->horizontalHeader()->hide();
+    table->verticalHeader()->hide();
+    table->horizontalHeader()->setStretchLastSection(true);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->resize(300, 594);
+    table->setWindowIcon(QIcon::fromTheme("view-calendar-list"));
+    table->setWindowTitle("界符表");
     table->setWordWrap(false);
     table->resizeColumnsToContents();
     table->show();
@@ -245,6 +293,12 @@ void MainWindow::setupMenuAndToolBar()
     compileMenu->addAction(showPTAction);
     toolBar->addAction(showPTAction);
 
+    QAction *showVallAction = new QAction(QIcon::fromTheme("media-show-active-track-amarok"), "显示活动记录", this);
+    showVallAction->setStatusTip("显示活动记录");
+    connect(showVallAction, SIGNAL(triggered()), this, SLOT(showVall()));
+    compileMenu->addAction(showVallAction);
+    toolBar->addAction(showVallAction);
+
     QAction *elemAction = new QAction(QIcon::fromTheme("labplot-4x-zoom"), "生成四元式", this);
     elemAction->setStatusTip("生成四元式");
     connect(elemAction, SIGNAL(triggered()), this, SLOT(show4Elem()));
@@ -268,6 +322,16 @@ void MainWindow::setupMenuAndToolBar()
     connect(showSynTextAction, SIGNAL(triggered()), this, SLOT(showSynText()));
     helpMenu->addAction(showSynTextAction);
 
+    QAction *showKeyWordAction = new QAction(QIcon::fromTheme("view-calendar-list"), "查看关键字表", this);
+    showKeyWordAction->setStatusTip("查看关键字表");
+    connect(showKeyWordAction, SIGNAL(triggered()), this, SLOT(showKeyWord()));
+    helpMenu->addAction(showKeyWordAction);
+
+    QAction *showDelimiterAction = new QAction(QIcon::fromTheme("view-calendar-list"), "查看界符表", this);
+    showDelimiterAction->setStatusTip("查看界符表");
+    connect(showDelimiterAction, SIGNAL(triggered()), this, SLOT(showDelimiter()));
+    helpMenu->addAction(showDelimiterAction);
+
     helpMenu->addAction(QIcon::fromTheme("help-about"), "关于", this, SLOT(about()));
 }
 
@@ -279,7 +343,79 @@ void MainWindow::documentWasModified()
 
 void MainWindow::runLexical()
 {
+    Scan scanner;
+    scanner.initFrom(codeEditor->document()->toPlainText().toStdString());
+    if(scanner.errPos != -1)
+    {
+        QMessageBox msg(this);
+        msg.setIcon(QMessageBox::Critical);
+        msg.setWindowTitle("词法分析遇到问题");
+        if(scanner.errPos == 0)
+            msg.setText(std::string("错误原因\n\n"+scanner.errMessage).c_str());
+        else
+            msg.setText(std::string("第"+std::to_string(scanner.errLine+1)+"行\n\n"+scanner.errMessage).c_str());
+        msg.addButton(QMessageBox::Ok);
+        msg.exec();
+        return;
+    }
     codeHighlighter = new CodeHighlighter(codeEditor->document());
+    QTableWidget *table = new QTableWidget(scanner.tokens.size(), 4, nullptr);
+    for(int i = 0;i < scanner.tokens.size();i++)
+    {
+        table->setItem(i, 0, new QTableWidgetItem(std::to_string(i).c_str()));
+        std::string content = "";
+        switch(scanner.tokens.at(i).type)
+        {
+        case TOKEN_TYPE_EOF:
+            content = "结束标志";
+            break;
+        case TOKEN_TYPE_UNKNOWN:
+            content = "未知类型";
+            break;
+        case TOKEN_TYPE_KEYWORD:
+            content = "关键字";
+            break;
+        case TOKEN_TYPE_IDENTIFIER:
+            content = "标识符";
+            break;
+        case TOKEN_TYPE_DELIMITER:
+            content = "界符";
+            break;
+        case TOKEN_TYPE_INT:
+            content = "整型";
+            break;
+        case TOKEN_TYPE_FLOAT:
+            content = "浮点";
+            break;
+        case TOKEN_TYPE_CHAR:
+            content = "字符";
+            break;
+        case TOKEN_TYPE_STR:
+            content = "字符串";
+            break;
+        case TOKEN_TYPE_COMMENT:
+            content = "注释";
+            break;
+        }
+        table->setItem(i, 1, new QTableWidgetItem(content.c_str()));
+        table->setItem(i, 2, new QTableWidgetItem(std::to_string(scanner.tokens.at(i).pos).c_str()));
+        table->setItem(i, 3, new QTableWidgetItem(scanner.tokens.at(i).name.c_str()));
+    }
+    table->setHorizontalHeaderItem(0, new QTableWidgetItem("序号"));
+    table->setHorizontalHeaderItem(1, new QTableWidgetItem("类型"));
+    table->setHorizontalHeaderItem(2, new QTableWidgetItem("位置"));
+    table->setHorizontalHeaderItem(3, new QTableWidgetItem("内容"));
+    //table->horizontalHeader()->hide();
+    table->verticalHeader()->hide();
+    table->horizontalHeader()->setStretchLastSection(true);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->resize(400, 594);
+    table->setWindowIcon(QIcon::fromTheme("tools-check-spelling"));
+    table->setWindowTitle("Token序列");
+    table->setWordWrap(false);
+    table->resizeColumnsToContents();
+    table->show();
 }
 
 void MainWindow::runSyntactic()
@@ -309,12 +445,15 @@ void MainWindow::runSyntactic()
             table->setItem(i, 1, new QTableWidgetItem(std::to_string(syn.syntaxProcess.at(i)).c_str()));
             table->setItem(i, 2, new QTableWidgetItem(synText[syn.syntaxProcess.at(i)]));
         }
-        table->horizontalHeader()->hide();
+        table->setHorizontalHeaderItem(0, new QTableWidgetItem("序号"));
+        table->setHorizontalHeaderItem(1, new QTableWidgetItem("产生式编号"));
+        table->setHorizontalHeaderItem(2, new QTableWidgetItem("产生式"));
+        //table->horizontalHeader()->hide();
         table->verticalHeader()->hide();
         table->horizontalHeader()->setStretchLastSection(true);
         table->setEditTriggers(QAbstractItemView::NoEditTriggers);
         table->setSelectionBehavior(QAbstractItemView::SelectRows);
-        table->resize(900, 594);
+        table->resize(950, 594);
         table->setWindowIcon(QIcon::fromTheme("code-context"));
         table->setWindowTitle("语法分析过程");
         table->setWordWrap(false);
@@ -405,8 +544,24 @@ void MainWindow::showParamTable()
                 table->setItem(i, 2, new QTableWidgetItem("unknown"));
             }
             table->setItem(i, 3, new QTableWidgetItem(std::to_string(syn.synb.at(i).addr).c_str()));
+            int j;
+            std::string tip = "params: ";
             switch(syn.synb.at(i).cat)
             {
+            case 'f':
+                if(j < 0||j >= syn.pfinf.size()) break;
+                for(j = 0;j < syn.pfinf.at(i).param.size();j++)
+                {
+                    tip = tip + std::to_string(syn.pfinf.at(i).param.at(j)) + " ";
+                }
+                tip = tip + "\nsynbs : ";
+                for(j = 0;j < syn.pfinf.at(i).synbs.size();j++)
+                {
+                    tip = tip + std::to_string(syn.pfinf.at(i).synbs.at(j)) + " ";
+                }
+                table->item(i, 3)->setToolTip(tip.c_str());
+                table->item(i, 3)->setTextColor(Qt::yellow);
+                break;
             case 'l':
                 table->item(i, 3)->setToolTip(("low: " + std::to_string(syn.ainf.at(syn.synb.at(i).addr).low) +
                                                "\nup : " + std::to_string(syn.ainf.at(syn.synb.at(i).addr).up)
@@ -419,7 +574,11 @@ void MainWindow::showParamTable()
                 break;
             }
         }
-        table->horizontalHeader()->hide();
+        table->setHorizontalHeaderItem(0, new QTableWidgetItem("序号"));
+        table->setHorizontalHeaderItem(1, new QTableWidgetItem("name"));
+        table->setHorizontalHeaderItem(2, new QTableWidgetItem("cat"));
+        table->setHorizontalHeaderItem(3, new QTableWidgetItem("addr"));
+        //table->horizontalHeader()->hide();
         table->verticalHeader()->hide();
         table->horizontalHeader()->setStretchLastSection(true);
         table->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -429,6 +588,99 @@ void MainWindow::showParamTable()
         table->setWindowTitle("符号表");
         table->setWordWrap(false);
         table->resizeColumnsToContents();
+        connect(table, SIGNAL(itemClicked(QTableWidgetItem *)), this, SLOT(showItem(QTableWidgetItem *)));
+        table->show();
+        return;
+    }
+    else
+    {
+        QMessageBox msg(this);
+        msg.setIcon(QMessageBox::Critical);
+        msg.setWindowTitle("语法分析遇到问题");
+        msg.setText(std::string("第"+std::to_string(syn.scanner.tokens.at(syn.errPos).lineNumber+1)+"行\n\n"+syn.errMessage+syn.scanner.tokens.at(syn.errPos).name).c_str());
+        msg.addButton(QMessageBox::Ok);
+        msg.exec();
+        showError(syn.scanner.tokens.at(syn.errPos).lineNumber+1, syn.errMessage+syn.scanner.tokens.at(syn.errPos).name);
+        return;
+    }
+}
+
+void MainWindow::showVall()
+{
+    Scan scanner;
+    scanner.initFrom(codeEditor->document()->toPlainText().toStdString());
+    if(scanner.errPos != -1)
+    {
+        QMessageBox msg(this);
+        msg.setIcon(QMessageBox::Critical);
+        msg.setWindowTitle("词法分析遇到问题");
+        if(scanner.errPos == 0)
+            msg.setText(std::string("错误原因\n\n"+scanner.errMessage).c_str());
+        else
+            msg.setText(std::string("第"+std::to_string(scanner.errLine+1)+"行\n\n"+scanner.errMessage).c_str());
+        msg.addButton(QMessageBox::Ok);
+        msg.exec();
+        return;
+    }
+    Syntax syn(scanner);
+    if(syn.program() == 0&&syn.scanner.next().isEOF())
+    {
+        try
+        {
+            syn.scanner.curIndex = 0;
+            syn.prepare_for_4elem();
+            syn.gen4elem();
+            syn.genValls();
+        }catch(...){}
+
+        if(syn.haveErr)
+        {
+            QMessageBox msg(this);
+            msg.setIcon(QMessageBox::Critical);
+            msg.setWindowTitle("生成四元式遇到问题");
+            msg.setText(syn.errMessagePT.c_str());
+            msg.addButton(QMessageBox::Ok);
+            msg.exec();
+            return;
+        }
+
+        QTableWidget *table = new QTableWidget(syn.basicValls.size(), 4, nullptr);
+        for(int i = 0;i < (int)syn.basicValls.size();i++)
+        {
+            table->setItem(i, 0, new QTableWidgetItem(std::to_string(i).c_str()));
+            table->setItem(i, 1, new QTableWidgetItem(std::to_string(syn.basicValls[i].size).c_str()));
+            std::string content = "";
+            for(auto it = syn.basicValls[i].par.begin();it != syn.basicValls[i].par.end();it++)
+            {
+                content = content + "(" + std::to_string(it->first) + "-" + std::to_string(it->second) + ") ";
+            }
+            table->setItem(i, 2, new QTableWidgetItem(content.c_str()));
+            table->item(i, 2)->setToolTip(content.c_str());
+            table->item(i, 2)->setTextColor(Qt::yellow);
+            content = "";
+            for(auto it = syn.basicValls[i].var.begin();it != syn.basicValls[i].var.end();it++)
+            {
+                content = content + "(" + std::to_string(it->first) + "-" + std::to_string(it->second) + ") ";
+            }
+            table->setItem(i, 3, new QTableWidgetItem(content.c_str()));
+            table->item(i, 3)->setToolTip(content.c_str());
+            table->item(i, 3)->setTextColor(Qt::yellow);
+        }
+        table->setHorizontalHeaderItem(0, new QTableWidgetItem("序号"));
+        table->setHorizontalHeaderItem(1, new QTableWidgetItem("size"));
+        table->setHorizontalHeaderItem(2, new QTableWidgetItem("par"));
+        table->setHorizontalHeaderItem(3, new QTableWidgetItem("var"));
+        //table->horizontalHeader()->hide();
+        table->verticalHeader()->hide();
+        table->horizontalHeader()->setStretchLastSection(true);
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table->setSelectionBehavior(QAbstractItemView::SelectRows);
+        table->resize(800, 300);
+        table->setWindowIcon(QIcon::fromTheme("media-show-active-track-amarok"));
+        table->setWindowTitle("活动记录");
+        table->setWordWrap(false);
+        table->resizeColumnsToContents();
+        connect(table, SIGNAL(itemClicked(QTableWidgetItem *)), this, SLOT(showItem(QTableWidgetItem *)));
         table->show();
         return;
     }
@@ -508,17 +760,23 @@ void MainWindow::show4Elem()
             }
             //table->setItem(i, 5, new QTableWidgetItem((syn.elems.at(i).needtag?"true":"false")));
         }
-        table->horizontalHeader()->hide();
+        table->setHorizontalHeaderItem(0, new QTableWidgetItem("序号"));
+        table->setHorizontalHeaderItem(1, new QTableWidgetItem("st"));
+        table->setHorizontalHeaderItem(2, new QTableWidgetItem("id1"));
+        table->setHorizontalHeaderItem(3, new QTableWidgetItem("id2"));
+        table->setHorizontalHeaderItem(4, new QTableWidgetItem("id0"));
+        //table->horizontalHeader()->hide();
         table->verticalHeader()->hide();
         table->horizontalHeader()->setStretchLastSection(true);
         table->setEditTriggers(QAbstractItemView::NoEditTriggers);
         table->setSelectionBehavior(QAbstractItemView::SelectRows);
         //table->resize(400, 594);
-        table->resize(330, 594);
+        table->resize(350, 594);
         table->setWindowIcon(QIcon::fromTheme("labplot-4x-zoom"));
         table->setWindowTitle("四元式结果");
         table->setWordWrap(false);
         table->resizeColumnsToContents();
+        connect(table, SIGNAL(itemClicked(QTableWidgetItem *)), this, SLOT(showItem(QTableWidgetItem *)));
         table->show();
         return;
     }
@@ -707,4 +965,16 @@ void MainWindow::runRun()
             return;
         }
     }
+}
+
+void MainWindow::showItem(QTableWidgetItem *item)
+{
+    if(item->toolTip() == "") return;
+    QMessageBox msg(this);
+    msg.setIcon(QMessageBox::Information);
+    msg.setWindowTitle("详细信息");
+    msg.setText(item->toolTip() + "\n              ");
+    msg.addButton(QMessageBox::Ok);
+    msg.exec();
+    return;
 }
