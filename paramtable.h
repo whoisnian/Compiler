@@ -101,11 +101,13 @@ class ParamTable
     int size_pfinfl;
     int size_ainfl;
     int size_consl;
+    int size_tmp;
     int beginidx_id_tmp; //临时变量开始位置
     int id_tmp;          //临时变量编号
     int inalNums[400];   //判断临时变量是否在用
     stack<int> alNums;   //算术栈
     map<int, int> table_synb, table_pfinf, table_cons, table_ainf;
+    vector<vall> valls;
     vector<vall> basicValls;//整体活动记录
     vector<bool> qt[3]; //活跃信息表，对应每个四元式id0，id1和id2的活跃信息
     int symbl[400];
