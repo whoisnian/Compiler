@@ -1,6 +1,7 @@
 #include <string>
 #include "SyntacticAnalysis.h"
 
+// 语法分析初始化
 Syntax::Syntax()
 {
     errPos = 0;
@@ -9,6 +10,7 @@ Syntax::Syntax()
     processIndex = 0;
 }
 
+// 语法分析初始化
 Syntax::Syntax(Scan scanner)
 {
     errPos = 0;
@@ -18,6 +20,7 @@ Syntax::Syntax(Scan scanner)
     this->scanner = scanner;
 }
 
+// 推导过程遍历，在此插入动作函数
 void Syntax::prepare_for_4elem()
 {
     switch(syntaxProcess.at(processIndex++))

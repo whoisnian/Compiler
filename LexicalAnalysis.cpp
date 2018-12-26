@@ -5,6 +5,7 @@ Scan::Scan()
     initTable();
 }
 
+// 从文件读取内容进行词法分析，未建立图形界面时测试用
 Scan::Scan(std::string filename)
 {
     initTable();
@@ -35,15 +36,18 @@ Scan::Scan(std::string filename)
             oldLinePos = linePos;
         }
 
+        // 记录之前状态，进行状态转移
         stateBefore = stateCur;
         stateCur = stateChange(stateBefore, ch);
         if(stateCur > 0)
         {
+            // 未到结束标志
             if(stateCur == STATE_BEGIN&&(ch == '\r'||ch == '\n'||ch == ' '||ch == '\t')) continue;
             token[tokenLen++] = ch;
         }
         else if(stateCur < 0)
         {
+            // 词法分析过程中出现错误
             token[tokenLen] = '\0';
             errMessage = "Error! Failed at " + std::string(token);
             errPos = ftell(fp);
@@ -53,6 +57,7 @@ Scan::Scan(std::string filename)
         }
         else
         {
+            // 一个Token到达结束状态，根据结束状态的前一个状态判断Token类型，并存储得到的Token
             token[tokenLen] = '\0';
             parseState(stateBefore, token);
             stateCur = stateChange(STATE_BEGIN, ch);
@@ -75,6 +80,7 @@ Scan::Scan(std::string filename)
     return;
 }
 
+// 从字符串读取内容进行词法分析，用于 Qt 图形界面操作
 void Scan::initFrom(std::string plainText)
 {
     if(plainText.empty())
@@ -107,15 +113,18 @@ void Scan::initFrom(std::string plainText)
             oldLinePos = linePos;
         }
 
+        // 记录之前状态，进行状态转移
         stateBefore = stateCur;
         stateCur = stateChange(stateBefore, ch);
         if(stateCur > 0)
         {
+            // 未到结束标志
             if(stateCur == STATE_BEGIN&&(ch == '\r'||ch == '\n'||ch == ' '||ch == '\t')) continue;
             token[tokenLen++] = ch;
         }
         else if(stateCur < 0)
         {
+            // 词法分析过程中出现错误
             token[tokenLen] = '\0';
             errMessage = "Error! Failed at " + std::string(token);
             errPos = cnt;
@@ -124,6 +133,7 @@ void Scan::initFrom(std::string plainText)
         }
         else
         {
+            // 一个Token到达结束状态，根据结束状态的前一个状态判断Token类型，并存储得到的Token
             token[tokenLen] = '\0';
             parseState(stateBefore, token);
             stateCur = stateChange(STATE_BEGIN, ch);
@@ -144,6 +154,7 @@ void Scan::initFrom(std::string plainText)
     }
 }
 
+// 初始化关键字表和界符表
 void Scan::initTable()
 {
     numberOfKeyWord = 8;
@@ -178,6 +189,7 @@ void Scan::initTable()
     delimiterTable[18] = std::string("}");
     delimiterTable[19] = std::string("%");
 
+    // 初始化各个表
     identifierTable.clear();
     intTable.clear();
     floatTable.clear();
@@ -185,6 +197,7 @@ void Scan::initTable()
     strTable.clear();
     tokens.clear();
 
+    // 初始化信息标记
     errMessage = "";
     errPos = -1;
     errLine = -1;
@@ -193,6 +206,7 @@ void Scan::initTable()
     curIndex = 0;
 }
 
+// 状态转移自动机
 int Scan::stateChange(int stateBefore, char ch)
 {
     switch(stateBefore)
@@ -345,6 +359,7 @@ int Scan::stateChange(int stateBefore, char ch)
     }
 }
 
+// 根据结束状态的前一个状态判断Token类型，构造Token填入Token表
 void Scan::parseState(int stateBefore, char *token)
 {
     switch(stateBefore)
@@ -426,6 +441,7 @@ void Scan::setIndex(int index)
     this->curIndex = index;
 }
 
+// 词法分析提供给其它部分的调用接口，得到一个有效Token（忽略注释）
 Token Scan::next()
 {
     // 忽略注释
@@ -443,6 +459,7 @@ Token Scan::next()
     return tokens.at(curIndex-1);
 }
 
+// 回退一个有效Token（忽略注释）
 void Scan::back()
 {
     if(curIndex < 1)

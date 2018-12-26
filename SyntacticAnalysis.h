@@ -4,6 +4,7 @@
 #include "LexicalAnalysis.h"
 #include "paramtable.h"
 
+// 推导过程标记
 const int PROCESS_PROGRAM                   = 1;
 const int PROCESS_DECLARATION_LIST          = 2;
 const int PROCESS_DECLARATION_LIST_TAIL_1   = 3;
@@ -93,8 +94,10 @@ class Syntax : public ParamTable
         Syntax();
         Syntax(Scan scanner);
 
+        // 重复遍历一遍推导过程
         void prepare_for_4elem();
         
+        // 递归下降中的非终结符对应函数
         int program();
         int declaration_list();
         int declaration_list_tail();

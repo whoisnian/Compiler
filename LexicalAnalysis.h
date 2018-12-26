@@ -56,6 +56,7 @@ class Token
         int lineNumber;         // 所处行号
 
         Token(){};
+        // 构造一个 Token
         Token(int type, std::string name, int pos, int lineNumber = 0, int startPos = 0, int length = 0)
         {
             this->type = type;
@@ -73,6 +74,7 @@ class Token
             else if(type == TOKEN_TYPE_FLOAT)
                 sscanf(name.c_str(), "%f", &valueFloat);
         }
+        // 复制构造函数
         Token(const Token& oldToken){
             type=oldToken.type;
             name=oldToken.name;
@@ -84,6 +86,7 @@ class Token
             valueInt=oldToken.valueInt;
             valueFloat=oldToken.valueFloat;
         }
+        // Token 常用类型判断
         bool isEOF()
         {
             if(this->type == TOKEN_TYPE_EOF)
